@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCT Support Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#f5f3ee;
+    --surface:#ffffff;
+    --surface-2:#faf8f4;
+    --border:#e4e0d6;
+    --text:#201e19;
+    --text-muted:#726d62;
+    --accent:#1f6f5c;
+    --accent-strong:#155647;
+    --accent-soft:#e3efec;
+    --focus:#1f6f5c;
+    --shadow: 0 1px 2px rgba(32,30,25,0.06), 0 6px 20px -8px rgba(32,30,25,0.12);
+
+    --status-open:#a8531d;       --status-open-bg:#faead9;
+    --status-progress:#215f96;   --status-progress-bg:#e2edf7;
+    --status-resolved:#2c7a45;   --status-resolved-bg:#e2f2e6;
+    --status-closed:#726d62;     --status-closed-bg:#eae7df;
+
+    --pri-urgent:#b52a2a;  --pri-urgent-bg:#f9e2e2;
+    --pri-high:#a5641b;    --pri-high-bg:#f7ecd9;
+    --pri-medium:#8a7519;  --pri-medium-bg:#f3eed3;
+    --pri-low:#456b49;     --pri-low-bg:#e3ede3;
+
+    --inst-norrsken:#2f6f86;  --inst-norrsken-bg:#e3eef2;
+    --inst-hut:#8a5a35;       --inst-hut-bg:#f2e8dc;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#16150f; --surface:#1e1c17; --surface-2:#24221c; --border:#38352b;
+      --text:#eeebe2; --text-muted:#a49d8c;
+      --accent:#49ac91; --accent-strong:#5cc0a3; --accent-soft:#213631;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -10px rgba(0,0,0,0.5);
+      --status-open:#e2985d;      --status-open-bg:#3a2a1a;
+      --status-progress:#7cb0e3;  --status-progress-bg:#1c2c3c;
+      --status-resolved:#7fce97;  --status-resolved-bg:#1c3324;
+      --status-closed:#a49d8c;    --status-closed-bg:#2c2a23;
+      --pri-urgent:#e8837c;  --pri-urgent-bg:#3b1f1e;
+      --pri-high:#e3ac6f;    --pri-high-bg:#3a2c19;
+      --pri-medium:#d7c377;  --pri-medium-bg:#332e19;
+      --pri-low:#96c99b;     --pri-low-bg:#22301f;
+      --inst-norrsken:#6fb8d1; --inst-norrsken-bg:#1c2f36;
+      --inst-hut:#d1a06f;      --inst-hut-bg:#332619;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#16150f; --surface:#1e1c17; --surface-2:#24221c; --border:#38352b;
+    --text:#eeebe2; --text-muted:#a49d8c;
+    --accent:#49ac91; --accent-strong:#5cc0a3; --accent-soft:#213631;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -10px rgba(0,0,0,0.5);
+    --status-open:#e2985d; --status-open-bg:#3a2a1a;
+    --status-progress:#7cb0e3; --status-progress-bg:#1c2c3c;
+    --status-resolved:#7fce97; --status-resolved-bg:#1c3324;
+    --status-closed:#a49d8c; --status-closed-bg:#2c2a23;
+    --pri-urgent:#e8837c; --pri-urgent-bg:#3b1f1e;
+    --pri-high:#e3ac6f; --pri-high-bg:#3a2c19;
+    --pri-medium:#d7c377; --pri-medium-bg:#332e19;
+    --pri-low:#96c99b; --pri-low-bg:#22301f;
+    --inst-norrsken:#6fb8d1; --inst-norrsken-bg:#1c2f36;
+    --inst-hut:#d1a06f;      --inst-hut-bg:#332619;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric:tabular-nums; }
+  a{color:var(--accent);}
+  button{ font-family:inherit; }
+  :focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  h1,h2,h3,h4{ text-wrap:balance; margin:0; }
+  ::placeholder{ color:var(--text-muted); opacity:0.75; }
+
+  .app{ min-height:100vh; display:flex; flex-direction:column; }
+
+  header.topbar{
+    position:sticky; top:0; z-index:20; background:var(--surface); border-bottom:1px solid var(--border);
+    padding:10px 20px; display:flex; align-items:center; gap:16px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; margin-right:auto; min-width:0; }
+  .brand-mark{
+    width:52px; height:34px; border-radius:8px; flex:none; background:#fff; border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; padding:3px; box-sizing:border-box;
+  }
+  .brand-mark img{ display:block; width:100%; height:100%; object-fit:contain; }
+  .brand-text{ min-width:0; }
+  .logo-badge{
+    display:inline-flex; align-items:center; justify-content:center; background:#fff;
+    border:1px solid var(--border); border-radius:7px; box-sizing:border-box; flex:none;
+  }
+  .logo-badge img{ display:block; object-fit:contain; }
+  .brand-text .t1{ font-weight:700; font-size:15px; letter-spacing:0.01em; }
+  .brand-text .t2{ font-size:12px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .icon-btn{
+    background:none; border:1px solid transparent; border-radius:8px; width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center; color:var(--text); cursor:pointer; position:relative; flex:none;
+  }
+  .icon-btn:hover{ background:var(--surface-2); border-color:var(--border); }
+  .badge-count{
+    position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 4px; background:var(--pri-urgent); color:#fff;
+    border-radius:8px; font-size:10px; font-weight:600; display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono";
+  }
+  .identity-chip{
+    display:flex; align-items:center; gap:8px; padding:5px 10px 5px 6px; border:1px solid var(--border); border-radius:999px;
+    background:var(--surface-2); cursor:pointer; flex:none;
+  }
+  .identity-chip.locked{ cursor:default; }
+  .identity-chip .av{
+    width:22px; height:22px; border-radius:50%; background:var(--accent-soft); color:var(--accent-strong);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;
+  }
+  .identity-chip .who{ font-size:12.5px; line-height:1.25; text-align:left; }
+  .identity-chip .who b{ font-weight:600; display:block; }
+  .identity-chip .who span{ color:var(--text-muted); font-size:11px; }
+
+  .shell{ flex:1; display:flex; min-height:0; }
+  nav.rail{
+    width:196px; flex:none; border-right:1px solid var(--border); background:var(--surface);
+    padding:16px 12px; display:flex; flex-direction:column; gap:2px;
+  }
+  nav.rail button{
+    display:flex; align-items:center; gap:10px; text-align:left; background:none; border:none; border-radius:8px;
+    padding:9px 10px; color:var(--text-muted); font-size:13.5px; font-weight:500; cursor:pointer;
+  }
+  nav.rail button svg{ flex:none; opacity:0.8; }
+  nav.rail button:hover{ background:var(--surface-2); color:var(--text); }
+  nav.rail button.active{ background:var(--accent-soft); color:var(--accent-strong); }
+  nav.rail button.active svg{ opacity:1; }
+  nav.rail .rail-foot{ margin-top:auto; padding:10px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); }
+
+  main.content{ flex:1; min-width:0; padding:24px 28px 60px; max-width:1080px; }
+  .tabstrip{ display:none; }
+
+  @media (max-width: 760px){
+    nav.rail{ display:none; }
+    .tabstrip{ display:flex; gap:4px; padding:8px 12px; background:var(--surface); border-bottom:1px solid var(--border); overflow-x:auto; }
+    .tabstrip button{
+      flex:none; background:none; border:1px solid var(--border); border-radius:999px; padding:7px 14px;
+      font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer;
+    }
+    .tabstrip button.active{ background:var(--accent-soft); color:var(--accent-strong); border-color:transparent; }
+    main.content{ padding:18px 16px 48px; }
+    .brand-text .t2{ display:none; }
+  }
+
+  .page-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+  .page-head h1{ font-size:20px; font-weight:700; }
+  .page-head .sub{ color:var(--text-muted); font-size:13px; }
+
+  .stat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
+  @media (max-width:640px){ .stat-grid{ grid-template-columns:repeat(2,1fr); } }
+  .stat-tile{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; position:relative; overflow:hidden; }
+  .stat-tile::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--stripe, var(--accent)); }
+  .stat-tile .num{ font-family:"IBM Plex Mono"; font-size:26px; font-weight:600; line-height:1; }
+  .stat-tile .lbl{ margin-top:6px; font-size:12px; color:var(--text-muted); font-weight:500; }
+
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+  .section-title{ font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin:0 0 10px 2px; }
+
+  .case-list{ display:flex; flex-direction:column; gap:8px; }
+  .case-row{
+    display:flex; align-items:center; gap:14px; padding:12px 14px; background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--stripe,var(--border)); border-radius:10px; cursor:pointer;
+  }
+  .case-row:hover{ border-color:var(--accent); }
+  .case-row .refid{ font-size:11.5px; color:var(--text-muted); flex:none; width:96px; }
+  .case-row .main{ flex:1; min-width:0; }
+  .case-row .title{ font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .case-row .meta{ margin-top:3px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .case-row .meta .muted{ font-size:12px; color:var(--text-muted); }
+  .case-row .side{ flex:none; display:flex; align-items:center; gap:10px; }
+
+  .att-row{
+    display:flex; align-items:center; gap:16px; padding:12px 14px; background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; flex-wrap:wrap;
+  }
+  .att-row .name{ flex:none; width:100px; font-weight:600; font-size:13.5px; }
+  .att-row .main{ flex:1; min-width:0; display:flex; gap:26px; flex-wrap:wrap; }
+  .att-row .seg-time{ font-size:12px; line-height:1.4; }
+  .att-row .seg-time span{ display:block; color:var(--text-muted); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }
+  .att-row .seg-time b{ font-weight:600; font-size:13px; }
+  .att-row .seg-time a{ font-weight:600; }
+  .att-row .side{ flex:none; }
+
+  .pill{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap; }
+  .pill .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .pill-category{ background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border); font-weight:500; }
+
+  .btn{ border:1px solid var(--border); background:var(--surface); color:var(--text); padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+  .btn:hover{ border-color:var(--accent); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn.primary:hover{ background:var(--accent-strong); border-color:var(--accent-strong); }
+  .btn.ghost{ background:none; border-color:transparent; }
+  .btn.ghost:hover{ background:var(--surface-2); border-color:var(--border); }
+  .btn.small{ padding:6px 11px; font-size:12.5px; }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .empty-state{
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:52px 24px;
+    color:var(--text-muted); border:1px dashed var(--border); border-radius:14px; background:var(--surface-2);
+  }
+  .empty-state svg{ color:var(--accent); opacity:0.8; }
+  .empty-state h3{ color:var(--text); font-size:15px; }
+
+  .form-card{ max-width:640px; padding:22px; display:flex; flex-direction:column; gap:16px; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size:12.5px; font-weight:600; color:var(--text-muted); }
+  .field input[type="text"], .field textarea, .field select{
+    font-family:inherit; font-size:13.5px; color:var(--text); background:var(--surface-2);
+    border:1px solid var(--border); border-radius:8px; padding:9px 11px; width:100%;
+  }
+  .field textarea{ resize:vertical; min-height:80px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:520px){ .row2{ grid-template-columns:1fr; } }
+  .seg{ display:flex; gap:6px; flex-wrap:wrap; }
+  .seg button{ border:1px solid var(--border); background:var(--surface-2); color:var(--text); padding:7px 12px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .seg button.on{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .filter-bar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .filter-bar input[type="text"], .filter-bar select{
+    font-family:inherit; font-size:13px; padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text);
+  }
+  .filter-bar input[type="text"]{ min-width:180px; flex:1; }
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,18,14,0.5); backdrop-filter:blur(2px);
+    display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; z-index:100; overflow-y:auto;
+  }
+  .modal{ background:var(--surface); border-radius:16px; width:100%; max-width:560px; box-shadow:var(--shadow); border:1px solid var(--border); }
+  .modal-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:18px 20px; border-bottom:1px solid var(--border); }
+  .modal-body{ padding:18px 20px; display:flex; flex-direction:column; gap:16px; }
+  .detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 18px; }
+  @media (max-width:480px){ .detail-grid{ grid-template-columns:1fr; } }
+  .kv .k{ font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); font-weight:600; }
+  .kv .v{ font-size:13.5px; margin-top:2px; }
+  .timeline{ display:flex; flex-direction:column; gap:0; border-top:1px solid var(--border); }
+  .tl-item{ display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
+  .tl-item .tl-dot{ width:8px; height:8px; border-radius:50%; margin-top:5px; flex:none; background:var(--accent); }
+  .tl-item .tl-body{ flex:1; min-width:0; }
+  .tl-item .tl-top{ display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+  .tl-item .tl-actor{ font-weight:600; font-size:12.5px; }
+  .tl-item .tl-time{ font-size:11px; color:var(--text-muted); }
+  .tl-item .tl-note{ margin-top:2px; font-size:13px; color:var(--text); }
+
+  .toast-wrap{ position:fixed; bottom:18px; right:18px; display:flex; flex-direction:column; gap:8px; z-index:200; }
+  .toast{ background:var(--text); color:var(--bg); padding:10px 16px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); max-width:320px; }
+
+  .id-card{
+    display:flex; flex-direction:row; align-items:center; gap:12px; text-align:left; border:1.5px solid var(--border);
+    border-radius:12px; padding:12px 14px; cursor:pointer; background:var(--surface-2); width:100%; box-sizing:border-box;
+  }
+  .id-card .id-card-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .id-card.on{ border-color:var(--accent); background:var(--accent-soft); }
+  .id-card b{ font-size:13.5px; }
+  .id-card span{ font-size:11.5px; color:var(--text-muted); }
+  .gate-error{ font-size:12.5px; color:var(--pri-urgent); }
+  .gate-hint{ font-size:11.5px; color:var(--text-muted); }
+
+  .bell-pop{
+    position:absolute; top:44px; right:20px; width:320px; max-width:calc(100vw - 32px); background:var(--surface);
+    border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); z-index:50; overflow:hidden;
+  }
+  .bell-pop .bp-head{ padding:12px 14px; border-bottom:1px solid var(--border); font-weight:600; font-size:13px; }
+  .bell-pop .bp-list{ max-height:320px; overflow-y:auto; }
+  .bell-pop .bp-item{ padding:10px 14px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .bell-pop .bp-item:hover{ background:var(--surface-2); }
+  .bell-pop .bp-item .t{ font-weight:600; font-size:12.5px; }
+  .bell-pop .bp-item .m{ font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+  .bell-pop .bp-empty{ padding:22px 14px; text-align:center; color:var(--text-muted); font-size:12.5px; }
+
+  .banner{ padding:10px 14px; border-radius:10px; background:var(--pri-high-bg); color:var(--pri-high); font-size:13px; margin-bottom:16px; }
+
+  input[type="file"]{ font-family:inherit; font-size:12.5px; color:var(--text-muted); }
+  .attach-list{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+  .attach-chip{ position:relative; width:76px; }
+  .attach-chip img{ width:76px; height:76px; object-fit:cover; border-radius:8px; border:1px solid var(--border); display:block; }
+  .attach-video{ width:76px; height:76px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+  .attach-name{ display:block; font-size:10px; color:var(--text-muted); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .attach-remove{
+    position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:var(--text); color:var(--bg);
+    border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+  }
+  .proof-grid{ display:flex; gap:10px; flex-wrap:wrap; }
+  .proof-grid img{ width:160px; height:160px; max-width:100%; border-radius:10px; border:1px solid var(--border); object-fit:cover; display:block; }
+  .proof-grid video{ width:220px; max-width:100%; height:160px; border-radius:10px; border:1px solid var(--border); display:block; background:#000; object-fit:contain; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Firebase (free tier) replaces Claude's shared-database feature so anyone with the link can use
+     this app without needing a Claude account. Pinned versions — see the setup guide before changing. -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  // =====================================================================================
+  // PASTE YOUR FIREBASE PROJECT'S CONFIG HERE — see "Running DCT Support Desk (self-hosted)"
+  // setup guide for exactly where to find these six values (Firebase console → Project
+  // settings → General → Your apps → SDK setup and configuration → Config).
+  // =====================================================================================
+  const firebaseConfig = {
+    apiKey: "PASTE_YOUR_API_KEY",
+    authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "PASTE_YOUR_PROJECT_ID",
+    storageBucket: "PASTE_YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "PASTE_YOUR_SENDER_ID",
+    appId: "PASTE_YOUR_APP_ID"
+  };
+  let firebaseReady = false, firestoreDb = null;
+  try{
+    if(firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('PASTE_') !== 0){
+      firebase.initializeApp(firebaseConfig);
+      firestoreDb = firebase.firestore();
+      firebaseReady = true;
+    }
+  }catch(e){ console.error('Firebase init failed', e); firebaseReady = false; }
+
+  // =====================================================================================
+  // PASTE YOUR CLOUDINARY DETAILS HERE — photo/video attachments use Cloudinary instead of
+  // Firebase Storage because Cloudinary's free plan needs no credit card. See the setup
+  // guide for exactly where to find these two values (Cloudinary dashboard → Cloud Name;
+  // Settings → Upload → Upload presets → an "Unsigned" preset).
+  // =====================================================================================
+  const CLOUDINARY_CLOUD_NAME = "mslhvpxc";
+  const CLOUDINARY_UPLOAD_PRESET = "abc123";
+  const cloudinaryReady = CLOUDINARY_CLOUD_NAME.indexOf('PASTE_') !== 0 && CLOUDINARY_UPLOAD_PRESET.indexOf('PASTE_') !== 0;
+</script>
+<script>
+(function(){
+
+  const ICONS = {
+    grid:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="9" width="5.5" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/></svg>',
+    plus:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.4"/><path d="M8 5.2V10.8M5.2 8H10.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    list:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M5.5 4H14M5.5 8H14M5.5 12H14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="2.3" cy="4" r="1" fill="currentColor"/><circle cx="2.3" cy="8" r="1" fill="currentColor"/><circle cx="2.3" cy="12" r="1" fill="currentColor"/></svg>',
+    bell:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4.5 7.5a4.5 4.5 0 1 1 9 0c0 3 1 4 1.6 4.7H2.9C3.5 11.5 4.5 10.5 4.5 7.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.2 14.5a1.8 1.8 0 0 0 3.6 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    x:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    check:'<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1.6"/><path d="M13 20.5l4.8 4.8L27.5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    search:'<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="4.3" stroke="currentColor" stroke-width="1.4"/><path d="M9.7 9.7L13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    download:'<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v7.2M4.3 6.4L7.5 9.6l3.2-3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 11.5v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    video:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4.5" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M8.3 7.8l4 2.2-4 2.2V7.8Z" fill="currentColor"/></svg>',
+    clip:'<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M9.5 3.5l-5 5a2 2 0 1 0 2.8 2.8l4.7-4.7a3.2 3.2 0 1 0-4.5-4.5L3 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    calendar:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3.2" width="12" height="10.8" rx="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.4h12M5.2 1.8v2.6M10.8 1.8v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    clock:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.8V8l2.6 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+
+  /* Real brand logos, embedded so the artifact stays a single self-contained file. */
+  const LOGOS = {
+    dct: 'data:image/png;base64,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',
+    norrsken: 'data:image/png;base64,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',
+    hut: 'data:image/png;base64,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'
+  };
+  function logoForInstitution(name){ return name==='The Hut Hotel' ? LOGOS.hut : LOGOS.norrsken; }
+
+  /* ---------------- constants ---------------- */
+  const CATEGORIES = ['Network','WiFi','Printer','Hardware','Software','Other'];
+  const PRIORITIES = ['Urgent','High','Medium','Low'];
+  const PRI_RANK = {Urgent:0, High:1, Medium:2, Low:3};
+  const STATUS_FLOW = {Open:'In Progress','In Progress':'Resolved', Resolved:'Closed'};
+  const STATUS_ACTION_LABEL = {Open:'Start progress','In Progress':'Mark resolved', Resolved:'Close case'};
+
+  const INSTITUTIONS = ['Norrsken House','The Hut Hotel'];
+  // Shared access codes. Change these any time by asking for an update — each covers one team.
+  const ACCESS = {
+    dct:      { code:'DCTTEAM7',  label:'DATA CENTRE TECHNOLOGIES',  sub:'Full access — manage every case' },
+    norrsken: { code:'NSKHOUSE',  label:'Norrsken House',   sub:'Report issues & track their status' },
+    hut:      { code:'HUTHOTEL',  label:'The Hut Hotel',    sub:'Report issues & track their status' }
+  };
+  const INSTITUTION_OF_ROLE = { norrsken:'Norrsken House', hut:'The Hut Hotel' };
+  function genClientId(role){
+    const prefix = role==='hut' ? 'HUT' : 'NSK';
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s=''; for(let i=0;i<4;i++) s += chars[Math.floor(Math.random()*chars.length)];
+    return prefix+'-'+s;
+  }
+  const ENGINEERS = ['Mahesh','Robert','Eugen','Abhishek','Ernest','Fillette'];
+  // The named individuals allowed to sign in for each institution — kept as a fixed roster,
+  // same idea as the DCT engineer list, so the shared access code still only ever resolves to a known person.
+  const NORRSKEN_STAFF = ['Rene','Elisee'];
+  const HUT_STAFF = ['Binoy Thomas','Anasari','Mariza','Rajesh'];
+  // DCT people who can log in but are not engineers (e.g. accounts/admin staff): they get view-only
+  // access to cases and meetings, and are never offered as an "assign to" / "requested engineer" option.
+  const DCT_VIEWERS = ['Rajitha'];
+  const DCT_STAFF = ENGINEERS.concat(DCT_VIEWERS);
+  const ROLE_ROSTER = { dct: DCT_STAFF, norrsken: NORRSKEN_STAFF, hut: HUT_STAFF };
+  // Attendance: only these four check themselves in/out (device location is captured and required
+  // both ways); only Rajitha and Mahesh can see the resulting log. Nobody else sees either.
+  const ATTENDANCE_TRACKED = ['Abhishek','Eugen','Fillette','Ernest'];
+  const ATTENDANCE_VIEWERS = ['Rajitha','Mahesh'];
+  // Published artifacts run in a sandbox that does not grant raw device GPS access (there is no such
+  // platform capability), so precise browser geolocation is best-effort only and can silently fail —
+  // the self-picked location below is what's actually guaranteed to be recorded every time.
+  const LOCATION_OPTIONS = ['Norrsken House','The Hut Hotel','DCT Office','Remote / Other'];
+  function engineerOptions(selected, placeholder){
+    return '<option value="" '+(!selected?'selected':'')+'>'+(placeholder||'No preference — anyone available')+'</option>' +
+      ENGINEERS.map(n=>'<option '+(selected===n?'selected':'')+'>'+n+'</option>').join('');
+  }
+
+  const DURATIONS = [15,30,45,60,90];
+  const MEETING_STATUS_FLOW = { Requested:'Confirmed', Confirmed:'Completed' };
+  const MEETING_STATUS_ACTION_LABEL = { Requested:'Confirm meeting', Confirmed:'Mark completed' };
+  function meetingStatusMeta(s){
+    return {
+      Requested:{label:'Requested', c:'var(--status-open)', bg:'var(--status-open-bg)'},
+      Confirmed:{label:'Confirmed', c:'var(--status-progress)', bg:'var(--status-progress-bg)'},
+      Completed:{label:'Completed', c:'var(--status-resolved)', bg:'var(--status-resolved-bg)'},
+      Declined:{label:'Declined', c:'var(--status-closed)', bg:'var(--status-closed-bg)'},
+      Cancelled:{label:'Cancelled', c:'var(--status-closed)', bg:'var(--status-closed-bg)'}
+    }[s] || {label:s, c:'var(--text-muted)', bg:'var(--surface-2)'};
+  }
+  function fmtMeetingWhen(m){
+    if(!m.date) return '—';
+    const d = new Date(m.date+'T'+(m.time||'00:00')+':00');
+    const dateStr = isNaN(d) ? m.date : d.toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'});
+    const timeStr = m.time || '';
+    return dateStr + (timeStr ? (' · '+timeStr) : '') + (m.durationMinutes ? (' · '+m.durationMinutes+'min') : '');
+  }
+
+  function statusMeta(s){
+    return {
+      Open:{label:'Open', c:'var(--status-open)', bg:'var(--status-open-bg)'},
+      'In Progress':{label:'In Progress', c:'var(--status-progress)', bg:'var(--status-progress-bg)'},
+      Resolved:{label:'Resolved', c:'var(--status-resolved)', bg:'var(--status-resolved-bg)'},
+      Closed:{label:'Closed', c:'var(--status-closed)', bg:'var(--status-closed-bg)'}
+    }[s] || {label:s, c:'var(--text-muted)', bg:'var(--surface-2)'};
+  }
+  function priMeta(p){
+    return {
+      Urgent:{c:'var(--pri-urgent)', bg:'var(--pri-urgent-bg)'},
+      High:{c:'var(--pri-high)', bg:'var(--pri-high-bg)'},
+      Medium:{c:'var(--pri-medium)', bg:'var(--pri-medium-bg)'},
+      Low:{c:'var(--pri-low)', bg:'var(--pri-low-bg)'}
+    }[p] || {c:'var(--text-muted)', bg:'var(--surface-2)'};
+  }
+  function instMeta(name){
+    return name==='The Hut Hotel'
+      ? {c:'var(--inst-hut)', bg:'var(--inst-hut-bg)'}
+      : {c:'var(--inst-norrsken)', bg:'var(--inst-norrsken-bg)'};
+  }
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function fmtRelative(iso){
+    const d = new Date(iso); const now = Date.now();
+    const diff = Math.max(0, now - d.getTime());
+    const m = Math.floor(diff/60000);
+    if(m < 1) return 'just now';
+    if(m < 60) return m+'m ago';
+    const h = Math.floor(m/60);
+    if(h < 24) return h+'h ago';
+    const dys = Math.floor(h/24);
+    if(dys < 7) return dys+'d ago';
+    return d.toLocaleDateString(undefined,{month:'short', day:'numeric'});
+  }
+  function fmtFull(iso){
+    if(!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) + ' · ' +
+           d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  }
+  function isToday(iso){
+    if(!iso) return false;
+    const d = new Date(iso), n = new Date();
+    return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate();
+  }
+  function fmtTimeOnly(iso){
+    if(!iso) return '—';
+    return new Date(iso).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  }
+  function mapLink(lat,lng){
+    if(lat==null || lng==null) return '';
+    return 'https://www.google.com/maps?q='+lat+','+lng;
+  }
+  function todayKey(d){
+    d = d || new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function attendanceDocId(name, date){ return name.replace(/[^A-Za-z0-9]+/g,'_') + '_' + date; }
+
+  /* ---------------- state ---------------- */
+  const state = {
+    identity: null,             // {role:'dct'|'norrsken'|'hut', name}
+    view: 'dashboard',
+    cases: [],
+    meetings: [],
+    meetingDetailId: null,
+    meetingFormDraft: null,
+    dbAvailable: null,
+    downloads: null,
+    assetsApi: null,
+    bootedAssets: false,
+    uploading: false,
+    submitting: false,
+    formDraft: null,
+    lastSeenAt: 0,
+    detailId: null,
+    bellOpen: false,
+    identityModal: false,
+    gatePendingRole: null,
+    gateError: '',
+    gateCode: '',
+    gateName: '',
+    filters: { q:'', status:'all', category:'all', priority:'all', institution:'all', sort:'newest' },
+    clientFilter: { q:'', status:'all' },
+    meetingFilters: { status:'all', institution:'all' },
+    clientMeetingFilter: { status:'all' },
+    attendance: [],
+    attendanceBusy: false,
+    attendanceFilter: { person:'all', month:'all' },
+    attendanceLocationDraft: null,
+    attendanceStage: null   // null | 'locating' | 'fallback' — drives the check-in/out card below
+  };
+
+  try{
+    const raw = localStorage.getItem('nsd_identity_v2');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && parsed.role && ACCESS[parsed.role] && parsed.name){
+        state.identity = parsed;
+        if(state.identity.role!=='dct' && !state.identity.clientId){
+          state.identity.clientId = genClientId(state.identity.role);
+          localStorage.setItem('nsd_identity_v2', JSON.stringify(state.identity));
+        }
+      }
+    }
+    const seen = localStorage.getItem('nsd_lastSeen');
+    state.lastSeenAt = seen ? parseInt(seen,10) : Date.now();
+  }catch(e){}
+  if(state.identity) state.view = state.identity.role==='dct' ? 'dashboard' : 'report';
+
+  let db = null;
+
+  function isStaff(){ return !!state.identity && state.identity.role==='dct'; }
+  // DCT staff who can log in and see everything, but can't change status, assign, or comment
+  // (e.g. an accountant who just needs visibility into cases — not one of the engineers).
+  function isViewer(){ return isStaff() && DCT_VIEWERS.indexOf(state.identity.name) >= 0; }
+  function myInstitution(){ return state.identity ? INSTITUTION_OF_ROLE[state.identity.role] : null; }
+  function clientLogoBadge(){
+    const inst = myInstitution();
+    if(!inst) return '';
+    const w = inst==='The Hut Hotel' ? 78 : 62;
+    return '<div class="logo-badge" style="width:'+w+'px;height:34px;padding:4px;align-self:center"><img src="'+logoForInstitution(inst)+'" alt="'+esc(inst)+'" style="width:100%;height:100%"></div>';
+  }
+  // If the client asked for specific engineer(s), only those engineers may confirm/decline/cancel/reopen
+  // that meeting — everyone else on the DCT team can still see it. No preference = anyone on the team can act.
+  function canActOnMeeting(m){
+    if(!isStaff() || isViewer()) return false;
+    if(!m.engineers || !m.engineers.length) return true;
+    return m.engineers.indexOf(state.identity.name) >= 0;
+  }
+  // Attendance access: the four tracked engineers check themselves in/out; Rajitha and Mahesh view
+  // the resulting log; nobody else (including other engineers) gets either.
+  function canTrackAttendance(){ return isStaff() && ATTENDANCE_TRACKED.indexOf(state.identity.name) >= 0; }
+  function canViewAttendance(){ return isStaff() && ATTENDANCE_VIEWERS.indexOf(state.identity.name) >= 0; }
+  function myAttendanceToday(){
+    if(!state.identity) return null;
+    const date = todayKey();
+    return state.attendance.find(a => a.name===state.identity.name && a.date===date) || null;
+  }
+
+  /* ---------------- toast ---------------- */
+  function toast(msg){
+    const wrap = document.getElementById('toastWrap');
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.remove(); }, 3400);
+  }
+
+  /* ---------------- db bootstrap ---------------- */
+  async function initDb(){
+    db = firebaseReady ? firestoreDb : null;
+    state.dbAvailable = !!db;
+    render();
+    if(db){
+      db.collection('cases').onSnapshot(
+        snap => { state.cases = snap.docs.map(d => Object.assign({id:d.id}, d.data())); render(); },
+        err => { console.error('db error', err); toast('Live sync error: '+err.code); }
+      );
+      db.collection('meetings').onSnapshot(
+        snap => { state.meetings = snap.docs.map(d => Object.assign({id:d.id}, d.data())); render(); },
+        err => { console.error('db error', err); toast('Live sync error: '+err.code); }
+      );
+      db.collection('attendance').onSnapshot(
+        snap => { state.attendance = snap.docs.map(d => Object.assign({id:d.id}, d.data())); render(); },
+        err => { console.error('db error', err); toast('Live sync error: '+err.code); }
+      );
+    }
+  }
+  // A plain browser download needs no external service — always available once the page has loaded.
+  function saveTextFile(filename, text, mime){
+    try{
+      const blob = new Blob([text], { type: mime || 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=> URL.revokeObjectURL(url), 4000);
+      return true;
+    }catch(e){ console.error('download failed', e); return false; }
+  }
+  async function initDownloads(){
+    state.downloads = true; // sentinel: exportCsv()/exportAttendanceCsv() call saveTextFile() directly
+  }
+  // Attachments go to Cloudinary (free, no card required) instead of Claude's assets capability
+  // or Firebase Storage (which now requires a billing account).
+  function uploadAsset(file){
+    const url = 'https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD_NAME + '/auto/upload';
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    return fetch(url, { method: 'POST', body: form })
+      .then(res => res.json().then(json => {
+        if(!res.ok){ throw new Error((json && json.error && json.error.message) || ('Upload failed (' + res.status + ')')); }
+        return json;
+      }))
+      .then(json => ({
+        id: json.public_id, url: json.secure_url, contentType: file.type, sizeBytes: file.size, name: file.name
+      }));
+  }
+  // Cloudinary's free/unsigned setup has no safe way to delete an asset from the browser
+  // (deleting needs the account's API secret, which must never ship in client-side code).
+  // Removing an attachment before submitting just drops it from this form; the file itself
+  // stays in Cloudinary storage — harmless at this app's scale, and nothing links to it.
+  function deleteAsset(attachment){
+    return Promise.resolve();
+  }
+  async function initAssets(){
+    state.assetsApi = cloudinaryReady; // sentinel: upload/remove wiring below calls uploadAsset()/deleteAsset() directly
+    state.bootedAssets = true;
+    render();
+  }
+
+  function ensureFormDraft(){
+    if(!state.formDraft){
+      state.formDraft = {
+        institution: INSTITUTIONS[0],
+        reportedBy: isStaff() ? '' : (state.identity ? state.identity.name : ''),
+        title:'', description:'', category: CATEGORIES[0], priority:'Medium', location:'',
+        requestedEngineer:'', attachments: []
+      };
+    }
+    return state.formDraft;
+  }
+  function ensureMeetingDraft(){
+    if(!state.meetingFormDraft){
+      state.meetingFormDraft = {
+        institution: INSTITUTIONS[0],
+        requestedBy: isStaff() ? '' : (state.identity ? state.identity.name : ''),
+        purpose:'', date:'', time:'', durationMinutes:30, engineers: []
+      };
+    }
+    return state.meetingFormDraft;
+  }
+
+  /* ---------------- derived ---------------- */
+  function activeCases(){
+    return state.cases.filter(c => c.status==='Open' || c.status==='In Progress')
+      .slice().sort((a,b)=>{
+        const pr = PRI_RANK[a.priority]-PRI_RANK[b.priority];
+        if(pr!==0) return pr;
+        return new Date(a.reportedAt) - new Date(b.reportedAt);
+      });
+  }
+  function unreadCases(){
+    return state.cases.filter(c => new Date(c.reportedAt).getTime() > state.lastSeenAt)
+      .sort((a,b)=> new Date(b.reportedAt)-new Date(a.reportedAt));
+  }
+  function filteredCases(){
+    const f = state.filters;
+    let list = state.cases.slice();
+    if(f.status!=='all') list = list.filter(c=>c.status===f.status);
+    if(f.category!=='all') list = list.filter(c=>c.category===f.category);
+    if(f.priority!=='all') list = list.filter(c=>c.priority===f.priority);
+    if(f.institution!=='all') list = list.filter(c=>c.institution===f.institution);
+    if(f.q.trim()){
+      const q = f.q.trim().toLowerCase();
+      list = list.filter(c => (c.title||'').toLowerCase().includes(q) || (c.description||'').toLowerCase().includes(q) || (c.refId||'').toLowerCase().includes(q) || (c.reportedBy||'').toLowerCase().includes(q) || (c.reportedByClientId||'').toLowerCase().includes(q));
+    }
+    if(f.sort==='newest') list.sort((a,b)=> new Date(b.reportedAt)-new Date(a.reportedAt));
+    else if(f.sort==='oldest') list.sort((a,b)=> new Date(a.reportedAt)-new Date(b.reportedAt));
+    else if(f.sort==='priority') list.sort((a,b)=> PRI_RANK[a.priority]-PRI_RANK[b.priority] || new Date(a.reportedAt)-new Date(b.reportedAt));
+    return list;
+  }
+  function myInstitutionCases(){
+    const inst = myInstitution();
+    const f = state.clientFilter;
+    let list = state.cases.filter(c=>c.institution===inst);
+    if(f.status!=='all') list = list.filter(c=>c.status===f.status);
+    if(f.q.trim()){
+      const q = f.q.trim().toLowerCase();
+      list = list.filter(c => (c.title||'').toLowerCase().includes(q) || (c.refId||'').toLowerCase().includes(q));
+    }
+    return list.sort((a,b)=> new Date(b.reportedAt)-new Date(a.reportedAt));
+  }
+  function meetingWhenValue(m){
+    const t = new Date((m.date||'2999-01-01')+'T'+(m.time||'00:00')+':00').getTime();
+    return isNaN(t) ? Infinity : t;
+  }
+  function unreadMeetings(){
+    return state.meetings.filter(m => new Date(m.createdAt).getTime() > state.lastSeenAt)
+      .sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  }
+  function upcomingMeetingsSorted(list){
+    return list.slice().sort((a,b)=> meetingWhenValue(a)-meetingWhenValue(b));
+  }
+  function filteredMeetings(){
+    const f = state.meetingFilters;
+    let list = state.meetings.slice();
+    if(f.status!=='all') list = list.filter(m=>m.status===f.status);
+    if(f.institution!=='all') list = list.filter(m=>m.institution===f.institution);
+    return upcomingMeetingsSorted(list);
+  }
+  function myInstitutionMeetings(){
+    const inst = myInstitution();
+    const f = state.clientMeetingFilter;
+    let list = state.meetings.filter(m=>m.institution===inst);
+    if(f.status!=='all') list = list.filter(m=>m.status===f.status);
+    return upcomingMeetingsSorted(list);
+  }
+
+  /* ---------------- mutations ---------------- */
+  function historyEntry(action, note){
+    return { ts:new Date().toISOString(), actor:state.identity.name, actorRole:isStaff()?'DCT':'Client', action, note:note||'' };
+  }
+
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+  // A single running count shared by every case (or every meeting), both buildings — ...M00001, ...M00002, ...
+  // A Firestore transaction (read-then-write, retried automatically by the SDK on conflict) makes sure
+  // two people submitting at the same moment never get the same number.
+  async function nextSequence(counterPath){
+    const counterRef = db.doc(counterPath);
+    return db.runTransaction(async (tx) => {
+      const snap = await tx.get(counterRef);
+      let current = 0;
+      if(snap.exists){
+        const d = snap.data();
+        if(d && typeof d.value === 'number') current = d.value;
+      }
+      const next = current + 1;
+      tx.set(counterRef, { value: next, updatedAt: new Date().toISOString() });
+      return next;
+    });
+  }
+  function nextCaseNumber(){ return nextSequence('meta/counter'); }
+  function nextMeetingNumber(){ return nextSequence('meta/meetingCounter'); }
+
+  async function createCase(data){
+    if(!db){ toast("Can't reach the shared database right now — nothing was saved."); return; }
+    state.submitting = true; render();
+    let refId;
+    try{
+      const seq = await nextCaseNumber();
+      refId = 'DCT-M' + String(seq).padStart(5,'0');
+    }catch(e){
+      state.submitting = false; render();
+      toast("Couldn't generate a case number — please try again.");
+      return;
+    }
+    const ref = db.collection('cases').doc();
+    const now = new Date().toISOString();
+    const wantsEngineer = data.requestedEngineer && data.requestedEngineer.trim();
+    const createdNote = wantsEngineer ? ('Case logged. Requested engineer: '+data.requestedEngineer+'.') : 'Case logged.';
+    const doc = Object.assign({}, data, {
+      refId, status:'Open', reportedAt: now, updatedAt: now,
+      assignedTo:'', resolvedAt:null, resolutionNotes:'', closingRemark:'',
+      history:[ historyEntry('created', createdNote) ]
+    });
+    try{
+      await ref.set(doc);
+      if(!isStaff() && wantsEngineer){
+        toast("Case "+refId+" sent to "+data.requestedEngineer+" — the whole DCT team has been notified too.");
+      } else if(!isStaff()){
+        toast('Case '+refId+' sent — the DCT team has been notified.');
+      } else {
+        toast('Case '+refId+' logged.');
+      }
+      state.view = isStaff() ? 'dashboard' : 'status';
+      state.formDraft = null;
+      state.submitting = false;
+      render();
+    }catch(e){
+      state.submitting = false;
+      toast('Could not save case ('+e.code+').');
+      render();
+    }
+  }
+
+  async function updateCase(id, patch){
+    if(!db) return toast("Can't reach the shared database right now.");
+    try{ await db.doc('cases/'+id).update(Object.assign({updatedAt:new Date().toISOString()}, patch)); }
+    catch(e){ toast('Update failed ('+e.code+').'); }
+  }
+
+  function viewerDenied(){ toast('Your account has view-only access.'); }
+  function advanceStatus(c, note){
+    if(isViewer()){ viewerDenied(); return; }
+    const next = STATUS_FLOW[c.status];
+    if(!next) return;
+    const patch = { status: next, history: c.history.concat([ historyEntry('status_changed', (note&&note.trim()) || ('Moved to '+next+'.')) ]) };
+    if(next==='Resolved'){ patch.resolvedAt = new Date().toISOString(); if(note && note.trim()) patch.resolutionNotes = note.trim(); }
+    if(next==='Closed' && note && note.trim()){ patch.closingRemark = note.trim(); }
+    updateCase(c.id, patch).then(()=> toast('Case '+c.refId+' → '+next+'.'));
+  }
+  function reopenCase(c, note){
+    if(isViewer()){ viewerDenied(); return; }
+    const patch = { status:'Open', resolvedAt:null, history: c.history.concat([ historyEntry('reopened', (note&&note.trim()) || 'Reopened.') ]) };
+    updateCase(c.id, patch).then(()=> toast('Case '+c.refId+' reopened.'));
+  }
+  function addComment(c, note){
+    if(isViewer()){ viewerDenied(); return; }
+    if(!note || !note.trim()) return;
+    updateCase(c.id, { history: c.history.concat([ historyEntry('comment', note.trim()) ]) }).then(()=> toast('Update added.'));
+  }
+  function assignCase(c, name){
+    if(isViewer()){ viewerDenied(); return; }
+    if(!name || !name.trim()) return;
+    updateCase(c.id, { assignedTo:name.trim(), history: c.history.concat([ historyEntry('assigned', 'Assigned to '+name.trim()+'.') ]) }).then(()=> toast('Assigned to '+name.trim()+'.'));
+  }
+
+  /* ---------------- attendance ----------------
+     Check-in/out always records a name, date and time. The location is captured LIVE from the
+     device's own GPS/network location the moment they tap Check in / Check out — that's the
+     primary, automatic path and needs no typing from them. Manual location selection only ever
+     shows up as a fallback, and only if this device's live location genuinely could not be read
+     (permission blocked, GPS off, etc.) — so check-in never dead-ends even then. */
+  function ensureAttendanceDraft(){
+    if(!state.attendanceLocationDraft) state.attendanceLocationDraft = LOCATION_OPTIONS[0];
+    return state.attendanceLocationDraft;
+  }
+  function tryGetLocation(timeoutMs){
+    timeoutMs = timeoutMs || 10000;
+    return new Promise((resolve)=>{
+      if(!navigator.geolocation){ resolve(null); return; }
+      let done = false;
+      const finish = (val)=>{ if(done) return; done = true; resolve(val); };
+      setTimeout(()=> finish(null), timeoutMs);
+      try{
+        navigator.geolocation.getCurrentPosition(
+          pos => finish({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+          ()  => finish(null),
+          { enableHighAccuracy:true, timeout:timeoutMs, maximumAge:0 }
+        );
+      }catch(e){ finish(null); }
+    });
+  }
+  async function attemptCheckIn(){
+    if(!canTrackAttendance()) return;
+    if(!db){ toast("Can't reach the shared database right now — try again in a moment."); return; }
+    if(myAttendanceToday()){ toast('You already checked in today.'); return; }
+    state.attendanceStage = 'locating'; state.attendanceBusy = true; render();
+    const loc = await tryGetLocation();
+    if(loc){ await finishCheckIn(loc, 'Live location'); }
+    else { state.attendanceStage = 'fallback'; state.attendanceBusy = false; render(); }
+  }
+  async function finishCheckIn(loc, locationLabel){
+    const date = todayKey();
+    const id = attendanceDocId(state.identity.name, date);
+    const now = new Date().toISOString();
+    try{
+      await db.doc('attendance/'+id).set({
+        name: state.identity.name, date, status:'Present',
+        checkInAt: now, checkInLocation: locationLabel,
+        checkInLat: loc?loc.lat:null, checkInLng: loc?loc.lng:null,
+        checkOutAt: null, checkOutLocation: '', checkOutLat: null, checkOutLng: null,
+        updatedAt: now
+      });
+      toast('Checked in at '+fmtTimeOnly(now)+(loc?' with your live location.':' — '+locationLabel+'.'));
+      state.attendanceStage = null; state.attendanceLocationDraft = null;
+    }catch(e){ toast('Check-in failed ('+(e&&e.code)+').'); }
+    state.attendanceBusy = false; render();
+  }
+  function checkInWithFallback(locationLabel){
+    if(!locationLabel){ toast('Please choose your location.'); return; }
+    state.attendanceBusy = true; render();
+    finishCheckIn(null, locationLabel);
+  }
+  async function attemptCheckOut(){
+    if(!canTrackAttendance()) return;
+    const rec = myAttendanceToday();
+    if(!rec){ toast('Check in first.'); return; }
+    if(rec.checkOutAt){ toast('You already checked out today.'); return; }
+    if(!db){ toast("Can't reach the shared database right now — try again in a moment."); return; }
+    state.attendanceStage = 'locating'; state.attendanceBusy = true; render();
+    const loc = await tryGetLocation();
+    if(loc){ await finishCheckOut(rec, loc, 'Live location'); }
+    else { state.attendanceStage = 'fallback'; state.attendanceBusy = false; render(); }
+  }
+  async function finishCheckOut(rec, loc, locationLabel){
+    const now = new Date().toISOString();
+    try{
+      await db.doc('attendance/'+rec.id).update({
+        checkOutAt: now, checkOutLocation: locationLabel,
+        checkOutLat: loc?loc.lat:null, checkOutLng: loc?loc.lng:null,
+        updatedAt: now
+      });
+      toast('Checked out at '+fmtTimeOnly(now)+(loc?' with your live location.':' — '+locationLabel+'.'));
+      state.attendanceStage = null; state.attendanceLocationDraft = null;
+    }catch(e){ toast('Check-out failed ('+(e&&e.code)+').'); }
+    state.attendanceBusy = false; render();
+  }
+  function checkOutWithFallback(locationLabel){
+    if(!locationLabel){ toast('Please choose your location.'); return; }
+    const rec = myAttendanceToday();
+    if(!rec){ toast('Check in first.'); return; }
+    state.attendanceBusy = true; render();
+    finishCheckOut(rec, null, locationLabel);
+  }
+
+  async function createMeeting(data){
+    if(!db){ toast("Can't reach the shared database right now — nothing was saved."); return; }
+    state.submitting = true; render();
+    let refId;
+    try{
+      const seq = await nextMeetingNumber();
+      refId = 'MTG-M' + String(seq).padStart(5,'0');
+    }catch(e){
+      state.submitting = false; render();
+      toast("Couldn't generate a meeting number — please try again.");
+      return;
+    }
+    const ref = db.collection('meetings').doc();
+    const now = new Date().toISOString();
+    const whoNote = data.engineers && data.engineers.length ? ('Requested with '+data.engineers.join(', ')+'.') : 'Requested — any available engineer.';
+    const doc = Object.assign({}, data, {
+      refId, status:'Requested', createdAt: now, updatedAt: now,
+      history:[ historyEntry('created', 'Meeting requested. '+whoNote) ]
+    });
+    try{
+      await ref.set(doc);
+      toast(isStaff() ? ('Meeting '+refId+' logged.') : ('Meeting request '+refId+' sent — the DCT team has been notified.'));
+      state.view = isStaff() ? 'meetings' : 'connection';
+      state.meetingFormDraft = null;
+      state.submitting = false;
+      render();
+    }catch(e){
+      state.submitting = false;
+      toast('Could not save meeting request ('+e.code+').');
+      render();
+    }
+  }
+  async function updateMeeting(id, patch){
+    if(!db) return toast("Can't reach the shared database right now.");
+    try{ await db.doc('meetings/'+id).update(Object.assign({updatedAt:new Date().toISOString()}, patch)); }
+    catch(e){ toast('Update failed ('+e.code+').'); }
+  }
+  function meetingActionDenied(m){
+    const who = (m.engineers && m.engineers.length) ? m.engineers.join(', ') : 'a DCT engineer';
+    toast('Only '+who+' can update this meeting.');
+  }
+  function advanceMeeting(m, note){
+    if(!canActOnMeeting(m)){ meetingActionDenied(m); return; }
+    const next = MEETING_STATUS_FLOW[m.status];
+    if(!next) return;
+    const patch = { status: next, history: m.history.concat([ historyEntry('status_changed', (note&&note.trim()) || ('Moved to '+next+'.')) ]) };
+    updateMeeting(m.id, patch).then(()=> toast('Meeting '+m.refId+' → '+next+'.'));
+  }
+  function declineMeeting(m, note){
+    if(!canActOnMeeting(m)){ meetingActionDenied(m); return; }
+    const patch = { status:'Declined', history: m.history.concat([ historyEntry('status_changed', (note&&note.trim()) || 'Declined.') ]) };
+    updateMeeting(m.id, patch).then(()=> toast('Meeting '+m.refId+' declined.'));
+  }
+  function cancelMeeting(m, note){
+    if(!canActOnMeeting(m)){ meetingActionDenied(m); return; }
+    const patch = { status:'Cancelled', history: m.history.concat([ historyEntry('status_changed', (note&&note.trim()) || 'Cancelled.') ]) };
+    updateMeeting(m.id, patch).then(()=> toast('Meeting '+m.refId+' cancelled.'));
+  }
+  function reopenMeeting(m, note){
+    if(!canActOnMeeting(m)){ meetingActionDenied(m); return; }
+    const patch = { status:'Requested', history: m.history.concat([ historyEntry('reopened', (note&&note.trim()) || 'Reopened.') ]) };
+    updateMeeting(m.id, patch).then(()=> toast('Meeting '+m.refId+' reopened.'));
+  }
+  function addMeetingComment(m, note){
+    if(isStaff() && isViewer()){ viewerDenied(); return; }
+    if(!note || !note.trim()) return;
+    updateMeeting(m.id, { history: m.history.concat([ historyEntry('comment', note.trim()) ]) }).then(()=> toast('Update added.'));
+  }
+
+  function exportCsv(list){
+    if(!state.downloads) return toast('Export is unavailable in this view.');
+    const cols = ['refId','institution','title','category','priority','status','reportedBy','reportedByRole','reportedByClientId','requestedEngineer','location','reportedAt','assignedTo','resolvedAt','resolutionNotes','closingRemark','attachmentCount'];
+    const rows = [cols.join(',')].concat(list.map(c => cols.map(k=>{
+      let v = k==='attachmentCount' ? String((c.attachments||[]).length) : (c[k]==null? '' : String(c[k]));
+      v = v.replace(/"/g,'""');
+      return /[",\n]/.test(v) ? '"'+v+'"' : v;
+    }).join(',')));
+    const csv = rows.join('\n');
+    if(saveTextFile('support-cases-'+new Date().toISOString().slice(0,10)+'.csv', csv)) toast('Export saved.');
+    else toast('Export failed — your browser blocked the download.');
+  }
+
+  /* ---------------- render root ---------------- */
+  function render(){
+    const app = document.getElementById('app');
+    app.innerHTML = renderHeader() + renderTabstrip() +
+      '<div class="shell">' + renderRail() + '<main class="content">' + renderView() + '</main></div>' +
+      (state.identity ? '' : renderIdentityOverlay()) +
+      (state.identityModal ? renderIdentityOverlay() : '') +
+      (state.detailId ? renderDetailModal() : '') +
+      (state.meetingDetailId ? renderMeetingDetailModal() : '') +
+      (state.bellOpen ? renderBellPop() : '');
+    wireEvents();
+  }
+
+  function initial(name){ return (name||'?').trim().slice(0,1).toUpperCase(); }
+
+  function renderHeader(){
+    const unread = (state.identity && isStaff()) ? (unreadCases().length + unreadMeetings().length) : 0;
+    return '<header class="topbar">' +
+      '<div class="brand"><div class="brand-mark"><img src="'+LOGOS.dct+'" alt="DCT"></div><div class="brand-text">' +
+        '<div class="t1">DCT Support Desk</div>' +
+        '<div class="t2">IT &amp; facilities support for Norrsken House and The Hut Hotel · run by DCT</div>' +
+      '</div></div>' +
+      (state.identity ? (
+        (isStaff() ? '<button class="icon-btn" id="bellBtn" aria-label="Notifications">'+ICONS.bell+ (unread>0? '<span class="badge-count">'+(unread>9?'9+':unread)+'</span>':'') +'</button>' : '') +
+        (isStaff() ?
+          '<button class="identity-chip" id="idChipBtn"><span class="av">'+esc(initial(state.identity.name))+'</span><span class="who"><b>'+esc(state.identity.name)+'</b><span>'+esc(ACCESS[state.identity.role].label)+'</span></span></button>'
+          :
+          '<div class="identity-chip locked" title="Signed in as '+esc(state.identity.name)+' — this can\'t be changed on this device."><span class="av">'+esc(initial(state.identity.name))+'</span><span class="who"><b>'+esc(state.identity.name)+'</b><span>'+esc(ACCESS[state.identity.role].label)+(state.identity.clientId?(' · '+esc(state.identity.clientId)):'')+'</span></span></div>'
+        )
+      ) : '') +
+    '</header>';
+  }
+
+  function navItems(){
+    if(isStaff()) return [ ['dashboard','Dashboard','grid'], ['all','All Cases','list'], ['meetings','Meetings','calendar'], ['attendance','Attendance','clock'] ];
+    return [ ['report','Report Issue','plus'], ['status','Case Status','list'], ['connection','Connection','calendar'] ];
+  }
+
+  function renderRail(){
+    if(!state.identity) return '';
+    return '<nav class="rail">' +
+      navItems().map(([id,label,icon]) => '<button data-nav="'+id+'" class="'+(state.view===id?'active':'')+'">'+ICONS[icon]+'<span>'+label+'</span></button>').join('') +
+      '<div class="rail-foot">'+(isStaff() ? 'Every case, for both buildings, kept as service history.' : esc(myInstitution())+' — everything your team reports here is tracked and kept as history.')+'</div>' +
+    '</nav>';
+  }
+  function renderTabstrip(){
+    if(!state.identity) return '';
+    return '<div class="tabstrip">' + navItems().map(([id,label]) => '<button data-nav="'+id+'" class="'+(state.view===id?'active':'')+'">'+label+'</button>').join('') + '</div>';
+  }
+
+  function renderView(){
+    if(!state.identity) return '';
+    const banner = state.dbAvailable===false
+      ? (!firebaseReady
+          ? '<div class="banner">This copy of the app isn\'t connected to a database yet. Open the file, find <b>firebaseConfig</b> near the top, and paste in your Firebase project\'s values — see the setup guide for exactly where to find them.</div>'
+          : '<div class="banner">Can\'t reach the shared database right now. Browsing works, but new cases and updates won\'t be saved until the connection is back.</div>')
+      : '';
+    if(isStaff()){
+      if(state.view==='all') return banner + renderAllCases();
+      if(state.view==='meetings') return banner + renderMeetingsView();
+      if(state.view==='newMeeting') return banner + renderNewMeetingPage();
+      if(state.view==='attendance') return banner + renderAttendanceView();
+      return banner + renderDashboard();
+    }
+    if(state.view==='status') return banner + renderClientStatus();
+    if(state.view==='connection') return banner + renderClientConnection();
+    return banner + renderClientReport();
+  }
+
+  /* ---------------- dashboard (DCT) ---------------- */
+  function renderDashboard(){
+    const cases = state.cases;
+    const openN = cases.filter(c=>c.status==='Open').length;
+    const progN = cases.filter(c=>c.status==='In Progress').length;
+    const resolvedToday = cases.filter(c=>c.status!=='Open' && c.status!=='In Progress' && isToday(c.resolvedAt)).length;
+    const total = cases.length;
+    const active = activeCases();
+
+    return '<div class="page-head"><div><h1>Dashboard</h1><div class="sub">What needs attention right now, across both buildings</div></div></div>' +
+      '<div class="stat-grid">' +
+        statTile(openN,'Open','var(--status-open)') +
+        statTile(progN,'In progress','var(--status-progress)') +
+        statTile(resolvedToday,'Resolved today','var(--status-resolved)') +
+        statTile(total,'Total logged','var(--accent)') +
+      '</div>' +
+      '<div class="section-title">By institution</div>' +
+      '<div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">' +
+        instTile('Norrsken House', cases) + instTile('The Hut Hotel', cases) +
+      '</div>' +
+      '<div class="section-title">Needs attention ('+active.length+')</div>' +
+      (active.length===0 ?
+        '<div class="empty-state">'+ICONS.check+'<h3>All caught up</h3><div>No open or in-progress cases right now.</div></div>' :
+        '<div class="case-list">' + active.map(c=>renderCaseRow(c)).join('') + '</div>');
+  }
+  function statTile(num,label,color){
+    return '<div class="stat-tile" style="--stripe:'+color+'"><div class="num mono">'+num+'</div><div class="lbl">'+label+'</div></div>';
+  }
+  function instTile(name, cases){
+    const active = cases.filter(c=>c.institution===name && (c.status==='Open'||c.status==='In Progress')).length;
+    const total = cases.filter(c=>c.institution===name).length;
+    const m = instMeta(name);
+    const logoW = name==='The Hut Hotel' ? 66 : 42;
+    return '<div class="stat-tile" style="--stripe:'+m.c+'">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+        '<div class="num mono">'+active+'</div>' +
+        '<div class="logo-badge" style="width:'+logoW+'px;height:38px;padding:4px"><img src="'+logoForInstitution(name)+'" alt="" style="width:100%;height:100%"></div>' +
+      '</div>' +
+      '<div class="lbl">'+esc(name)+' · active ('+total+' total)</div>' +
+    '</div>';
+  }
+
+  /* ---------------- attendance (DCT only) ---------------- */
+  function renderAttendanceView(){
+    if(canTrackAttendance()) return renderAttendanceSelf();
+    if(canViewAttendance()) return renderAttendanceLog();
+    return '<div class="page-head"><div><h1>Attendance</h1><div class="sub">Staff check-in / check-out tracking</div></div></div>' +
+      '<div class="empty-state">'+ICONS.clock+'<h3>Not set up for your account</h3><div>Attendance check-in is only used by Abhishek, Eugen, Fillette and Ernest — and the log is only visible to Rajitha and Mahesh.</div></div>';
+  }
+  function renderAttendanceSelf(){
+    const rec = myAttendanceToday();
+    const mine = state.attendance.filter(a=>a.name===state.identity.name).slice().sort((a,b)=> b.date.localeCompare(a.date)).slice(0,14);
+    const draftLoc = ensureAttendanceDraft();
+    const stage = state.attendanceStage;
+    const isCheckIn = !rec;
+    const locSeg = '<div class="field"><label>Couldn\'t read this device\'s live location — where are you '+(isCheckIn?'checking in':'checking out')+' from?</label><div class="seg" id="attLocSeg">' +
+      LOCATION_OPTIONS.map(o=>'<button type="button" data-loc="'+esc(o)+'" class="'+(draftLoc===o?'on':'')+'">'+esc(o)+'</button>').join('') +
+    '</div></div>';
+    let actionBlock;
+    if(!rec){
+      if(stage==='locating'){
+        actionBlock = '<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px;max-width:440px">' +
+          '<div style="font-size:14.5px"><b>Getting this device\'s live location…</b></div>' +
+          '<div style="font-size:12px;color:var(--text-muted)">If your browser asks for location access, choose Allow.</div>' +
+        '</div>';
+      } else if(stage==='fallback'){
+        actionBlock = '<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px;max-width:440px">' +
+          '<div style="font-size:14.5px"><b>Couldn\'t get your live location.</b></div>' +
+          '<div style="font-size:12px;color:var(--text-muted)">This can happen if location access was blocked, is turned off, or isn\'t available in this view. You can try again, or check in with your location picked manually for now.</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost small" id="attRetryLocBtn">Try live location again</button></div>' +
+          locSeg +
+          '<button class="btn primary" id="attCheckInFallbackBtn" '+(state.attendanceBusy?'disabled':'')+'>'+(state.attendanceBusy?'Checking in…':'Check in with this location')+'</button>' +
+        '</div>';
+      } else {
+        actionBlock = '<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:12px;max-width:440px">' +
+          '<div style="font-size:14.5px"><b>You haven\'t checked in today.</b></div>' +
+          '<div style="font-size:12px;color:var(--text-muted)">Tapping Check in asks this device for its live location and saves it along with the time.</div>' +
+          '<button class="btn primary" id="attCheckInBtn" '+(state.attendanceBusy?'disabled':'')+'>Check in</button>' +
+        '</div>';
+      }
+    } else if(rec.checkInAt && !rec.checkOutAt){
+      const checkedInHead = '<div style="font-size:14.5px"><b>Checked in today at '+fmtTimeOnly(rec.checkInAt)+'</b></div>' +
+        '<div style="font-size:12.5px;color:var(--text-muted)">From: '+esc(rec.checkInLocation||'—')+(rec.checkInLat!=null?' · <a href="'+mapLink(rec.checkInLat,rec.checkInLng)+'" target="_blank" rel="noopener">map</a>':'')+'</div>';
+      if(stage==='locating'){
+        actionBlock = '<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px;max-width:440px">' +
+          checkedInHead +
+          '<div style="font-size:14.5px;margin-top:6px"><b>Getting this device\'s live location…</b></div>' +
+        '</div>';
+      } else if(stage==='fallback'){
+        actionBlock = '<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px;max-width:440px">' +
+          checkedInHead +
+          '<div style="font-size:14.5px;margin-top:6px"><b>Couldn\'t get your live location.</b></div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost small" id="attRetryLocBtn">Try live location again</button></div>' +
+          locSeg +
+          '<button class="btn primary" id="attCheckOutFallbackBtn" '+(state.attendanceBusy?'disabled':'')+'>'+(state.attendanceBusy?'Checking out…':'Check out with this location')+'</button>' +
+        '</div>';
+      } else {
+        actionBlock = '<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px;max-width:440px">' +
+          checkedInHead +
+          '<button class="btn primary" id="attCheckOutBtn" '+(state.attendanceBusy?'disabled':'')+'>Check out</button>' +
+        '</div>';
+      }
+    } else {
+      actionBlock = '<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:8px;max-width:440px">' +
+        '<div style="font-size:14.5px"><b>Done for today</b></div>' +
+        '<div style="font-size:12.5px;color:var(--text-muted)">In: '+fmtTimeOnly(rec.checkInAt)+' · '+esc(rec.checkInLocation||'—')+(rec.checkInLat!=null?' (<a href="'+mapLink(rec.checkInLat,rec.checkInLng)+'" target="_blank" rel="noopener">map</a>)':'')+'</div>' +
+        '<div style="font-size:12.5px;color:var(--text-muted)">Out: '+fmtTimeOnly(rec.checkOutAt)+' · '+esc(rec.checkOutLocation||'—')+(rec.checkOutLat!=null?' (<a href="'+mapLink(rec.checkOutLat,rec.checkOutLng)+'" target="_blank" rel="noopener">map</a>)':'')+'</div>' +
+      '</div>';
+    }
+    return '<div class="page-head"><div><h1>Attendance</h1><div class="sub">Check in when your day starts, check out when it ends — the date, time and your location are all saved both times.</div></div></div>' +
+      actionBlock +
+      '<div class="section-title" style="margin-top:24px">Your recent history</div>' +
+      (mine.length===0 ?
+        '<div class="empty-state">'+ICONS.clock+'<h3>No attendance yet</h3><div>Your check-ins will show up here.</div></div>' :
+        '<div class="case-list">' + mine.map(a=>renderAttRow(a,false)).join('') + '</div>');
+  }
+  function attendanceMonthOptions(){
+    const months = Array.from(new Set(state.attendance.map(a=>a.date.slice(0,7))));
+    months.sort().reverse();
+    return months;
+  }
+  function fmtMonthLabel(ym){
+    const d = new Date(ym+'-01T00:00:00');
+    return isNaN(d) ? ym : d.toLocaleDateString(undefined,{year:'numeric', month:'long'});
+  }
+  function renderAttendanceLog(){
+    const f = state.attendanceFilter;
+    let list = state.attendance.slice();
+    if(f.person!=='all') list = list.filter(a=>a.name===f.person);
+    if(f.month!=='all') list = list.filter(a=>a.date.slice(0,7)===f.month);
+    list.sort((a,b)=> b.date.localeCompare(a.date) || (a.name<b.name?-1:1));
+    const months = attendanceMonthOptions();
+    return '<div class="page-head"><div><h1>Attendance</h1><div class="sub">Check-in / check-out log for Abhishek, Eugen, Fillette and Ernest — visible only to you and Mahesh. Every day is kept, so at month end you can filter to that month and export it.</div></div></div>' +
+      '<div class="filter-bar">' +
+        '<select id="attFilterName"><option value="all" '+(f.person==='all'?'selected':'')+'>Everyone</option>' +
+          ATTENDANCE_TRACKED.map(n=>'<option '+(f.person===n?'selected':'')+'>'+esc(n)+'</option>').join('') +
+        '</select>' +
+        '<select id="attFilterMonth"><option value="all" '+(f.month==='all'?'selected':'')+'>All months</option>' +
+          months.map(m=>'<option value="'+m+'" '+(f.month===m?'selected':'')+'>'+fmtMonthLabel(m)+'</option>').join('') +
+        '</select>' +
+        '<button class="btn small" id="attExportBtn" style="margin-left:auto">Export CSV</button>' +
+      '</div>' +
+      (list.length===0 ?
+        '<div class="empty-state">'+ICONS.clock+'<h3>No attendance recorded</h3><div>Check-ins by the team will show up here.</div></div>' :
+        '<div class="case-list">' + list.map(a=>renderAttRow(a,true)).join('') + '</div>');
+  }
+  function exportAttendanceCsv(list){
+    if(!canViewAttendance()) return;
+    if(!state.downloads) return toast('Export is unavailable in this view.');
+    const cols = ['name','date','status','checkInAt','checkInLocation','checkInLat','checkInLng','checkOutAt','checkOutLocation','checkOutLat','checkOutLng'];
+    const rows = [cols.join(',')].concat(list.map(a => cols.map(k=>{
+      let v = a[k]==null ? '' : String(a[k]);
+      v = v.replace(/"/g,'""');
+      return /[",\n]/.test(v) ? '"'+v+'"' : v;
+    }).join(',')));
+    const csv = rows.join('\n');
+    const monthPart = state.attendanceFilter.month!=='all' ? state.attendanceFilter.month : 'all-months';
+    if(saveTextFile('attendance-'+monthPart+'-'+new Date().toISOString().slice(0,10)+'.csv', csv)) toast('Attendance export saved — open it in Excel or Google Sheets.');
+    else toast('Export failed — your browser blocked the download.');
+  }
+  function renderAttRow(a, showName){
+    const dateStr = new Date(a.date+'T00:00:00').toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'});
+    const inLine = a.checkInAt ? (fmtTimeOnly(a.checkInAt)+' · '+esc(a.checkInLocation||'—')+(a.checkInLat!=null?' · <a href="'+mapLink(a.checkInLat,a.checkInLng)+'" target="_blank" rel="noopener">map</a>':'')) : '—';
+    const outLine = a.checkOutAt ? (fmtTimeOnly(a.checkOutAt)+' · '+esc(a.checkOutLocation||'—')+(a.checkOutLat!=null?' · <a href="'+mapLink(a.checkOutLat,a.checkOutLng)+'" target="_blank" rel="noopener">map</a>':'')) : '—';
+    return '<div class="att-row">' +
+      (showName ? '<div class="name">'+esc(a.name)+'</div>' : '') +
+      '<div class="main">' +
+        '<div class="seg-time"><span>Date</span><b>'+dateStr+'</b></div>' +
+        '<div class="seg-time"><span>In</span><b>'+inLine+'</b></div>' +
+        '<div class="seg-time"><span>Out</span><b>'+outLine+'</b></div>' +
+      '</div>' +
+      '<div class="side"><span class="pill" style="background:var(--status-resolved-bg);color:var(--status-resolved)">'+esc(a.status||'Present')+'</span></div>' +
+    '</div>';
+  }
+
+  function renderAttachField(){
+    const d = ensureFormDraft();
+    const atts = d.attachments;
+    return '<div class="field"><label for="fAttach">Photo or video proof <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional, up to 4 files, 20MB each)</span></label>' +
+      (state.bootedAssets && !state.assetsApi ?
+        '<div class="gate-hint">Attachments aren\'t available in this view.</div>' :
+        (
+          '<input type="file" id="fAttach" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm" multiple '+(atts.length>=4?'disabled':'')+'>' +
+          (state.uploading ? '<div class="gate-hint">Uploading…</div>' : '')
+        )
+      ) +
+      (atts.length ? '<div class="attach-list">'+atts.map((a,i)=>renderAttachChip(a,i)).join('')+'</div>' : '') +
+    '</div>';
+  }
+  function renderAttachChip(a,i){
+    const isImage = a.contentType && a.contentType.indexOf('image/')===0;
+    return '<div class="attach-chip">' +
+      (isImage ? '<img src="'+a.url+'" alt="">' : '<div class="attach-video">'+ICONS.video+'</div>') +
+      '<span class="attach-name">'+esc(a.name||'')+'</span>' +
+      '<button type="button" class="attach-remove" data-remove-attach="'+i+'" aria-label="Remove attachment">'+ICONS.x+'</button>' +
+    '</div>';
+  }
+  function renderProofGallery(atts){
+    if(!atts || !atts.length) return '';
+    return '<div><div class="section-title" style="margin-top:4px">Attachments ('+atts.length+')</div><div class="proof-grid">' +
+      atts.map(a=>{
+        const isImage = a.contentType && a.contentType.indexOf('image/')===0;
+        return isImage
+          ? '<a href="'+a.url+'" target="_blank" rel="noopener"><img src="'+a.url+'" alt="'+esc(a.name||'attachment')+'"></a>'
+          : '<video src="'+a.url+'" controls preload="metadata"></video>';
+      }).join('') +
+    '</div></div>';
+  }
+
+  function renderCaseRow(c){
+    const sm = statusMeta(c.status), pm = priMeta(c.priority), im = instMeta(c.institution);
+    const nextLabel = STATUS_ACTION_LABEL[c.status];
+    return '<div class="case-row" style="--stripe:'+sm.c+'" data-open="'+c.id+'">' +
+      '<div class="refid mono">'+esc(c.refId)+'</div>' +
+      '<div class="main">' +
+        '<div class="title">'+esc(c.title)+'</div>' +
+        '<div class="meta">' +
+          (isStaff() ? '<span class="pill" style="color:'+im.c+';background:'+im.bg+'">'+esc(c.institution)+'</span>' : '') +
+          '<span class="pill" style="color:'+pm.c+';background:'+pm.bg+'"><span class="dot"></span>'+esc(c.priority)+'</span>' +
+          '<span class="pill pill-category">'+esc(c.category)+'</span>' +
+          (c.requestedEngineer ? '<span class="pill pill-category" style="color:var(--accent-strong);border-color:var(--accent)">For '+esc(c.requestedEngineer)+'</span>' : '') +
+          (c.attachments && c.attachments.length ? '<span class="pill pill-category">'+ICONS.clip+' '+c.attachments.length+'</span>' : '') +
+          '<span class="muted">'+esc(c.reportedBy)+(isStaff() && c.reportedByClientId ? ' <span class="mono">('+esc(c.reportedByClientId)+')</span>' : '')+' · '+fmtRelative(c.reportedAt)+(c.location?(' · '+esc(c.location)):'')+'</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="side">' +
+        '<span class="pill" style="color:'+sm.c+';background:'+sm.bg+'">'+sm.label+'</span>' +
+        (isStaff() && !isViewer() && nextLabel ? '<button class="btn small" data-quick="'+c.id+'">'+nextLabel+'</button>' : '') +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ---------------- new case (DCT, either institution) ---------------- */
+  function renderNewCase(){
+    const d = ensureFormDraft();
+    return '<div class="page-head"><div><h1>Log a new case</h1><div class="sub">Whatever came in over WhatsApp, put it here so nothing gets lost.</div></div></div>' +
+      '<form class="card form-card" id="newCaseForm">' +
+        '<div class="field"><label>Which building is this for?</label><div class="seg" id="fInstSeg">' +
+          INSTITUTIONS.map(i=>'<button type="button" data-inst="'+i+'" class="'+(d.institution===i?'on':'')+'">'+i+'</button>').join('') +
+        '</div></div>' +
+        '<div class="row2">' +
+          '<div class="field"><label for="fReportedBy">Reported by</label><input type="text" id="fReportedBy" placeholder="Whoever told you about it" value="'+esc(d.reportedBy)+'" required></div>' +
+          '<div class="field"><label for="fCategory">Category</label><select id="fCategory">' + CATEGORIES.map(c=>'<option '+(d.category===c?'selected':'')+'>'+c+'</option>').join('') + '</select></div>' +
+        '</div>' +
+        '<div class="field"><label for="fTitle">Issue title</label><input type="text" id="fTitle" placeholder="e.g. WiFi dropping in 2nd floor lounge" value="'+esc(d.title)+'" required></div>' +
+        '<div class="field"><label for="fDesc">Details</label><textarea id="fDesc" placeholder="What is happening, since when, who is affected...">'+esc(d.description)+'</textarea></div>' +
+        '<div class="row2">' +
+          '<div class="field"><label>Priority</label><div class="seg" id="fPriSeg">' +
+            PRIORITIES.map(p=>'<button type="button" data-pri="'+p+'" class="'+(d.priority===p?'on':'')+'" style="'+(d.priority===p?('background:'+priMeta(p).c+';border-color:'+priMeta(p).c):'')+'">'+p+'</button>').join('') +
+          '</div></div>' +
+          '<div class="field"><label for="fLocation">Location / area <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="text" id="fLocation" placeholder="e.g. 3rd floor, Meeting Room B" value="'+esc(d.location)+'"></div>' +
+        '</div>' +
+        '<div class="field"><label for="fEngineer">Preferred engineer <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional, if the client asked for someone)</span></label><select id="fEngineer">'+engineerOptions(d.requestedEngineer)+'</select></div>' +
+        renderAttachField() +
+        '<div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn ghost" data-nav="dashboard">Cancel</button><button type="submit" class="btn primary" '+((state.uploading||state.submitting)?'disabled':'')+'>'+(state.submitting?'Logging…':'Log case')+'</button></div>' +
+      '</form>';
+  }
+
+  /* ---------------- all cases (DCT) ---------------- */
+  function renderAllCases(){
+    const f = state.filters;
+    const list = filteredCases();
+    return '<div class="page-head"><div><h1>All cases</h1><div class="sub">'+state.cases.length+' logged in total · full service history</div></div>' +
+      '<button class="btn" id="exportBtn" '+(state.downloads?'':'disabled title="Export unavailable in this view"')+'>'+ICONS.download+' Export CSV</button></div>' +
+      '<div class="filter-bar">' +
+        '<input type="text" id="fq" placeholder="Search title, description, ref ID, reporter or client ID..." value="'+esc(f.q)+'">' +
+        selectFilter('fInstitution', ['all'].concat(INSTITUTIONS), f.institution, 'Building') +
+        selectFilter('fStatus', ['all','Open','In Progress','Resolved','Closed'], f.status, 'Status') +
+        selectFilter('fCategory2', ['all'].concat(CATEGORIES), f.category, 'Category') +
+        selectFilter('fPriority2', ['all'].concat(PRIORITIES), f.priority, 'Priority') +
+        selectFilter('fSort', ['newest','oldest','priority'], f.sort, 'Sort', {newest:'Newest first',oldest:'Oldest first',priority:'By priority'}) +
+      '</div>' +
+      (list.length===0 ?
+        '<div class="empty-state">'+ICONS.search+'<h3>No cases match</h3><div>Try clearing a filter or the search box.</div></div>' :
+        '<div class="case-list">' + list.map(c=>renderCaseRow(c)).join('') + '</div>');
+  }
+  function selectFilter(id, options, current, label, labels){
+    return '<select id="'+id+'" aria-label="'+label+'">' + options.map(o=>'<option value="'+o+'" '+(o===current?'selected':'')+'>'+(o==='all'? (label) : ((labels&&labels[o])||o))+'</option>').join('') + '</select>';
+  }
+
+  /* ---------------- client: report issue ---------------- */
+  function renderClientReport(){
+    const d = ensureFormDraft();
+    return '<div class="page-head"><div><h1>Report an issue</h1><div class="sub">'+esc(myInstitution())+' · this goes straight to the DCT team.</div></div>'+clientLogoBadge()+'</div>' +
+      '<form class="card form-card" id="newCaseForm">' +
+        '<div class="field"><label for="fReportedBy">Your name</label><input type="text" id="fReportedBy" value="'+esc(d.reportedBy)+'" required></div>' +
+        '<div class="field"><label for="fTitle">Issue title</label><input type="text" id="fTitle" placeholder="e.g. Printer on 3rd floor not working" value="'+esc(d.title)+'" required></div>' +
+        '<div class="field"><label for="fDesc">Details</label><textarea id="fDesc" placeholder="What is happening, since when, who is affected...">'+esc(d.description)+'</textarea></div>' +
+        '<div class="row2">' +
+          '<div class="field"><label for="fCategory">Category</label><select id="fCategory">' + CATEGORIES.map(c=>'<option '+(d.category===c?'selected':'')+'>'+c+'</option>').join('') + '</select></div>' +
+          '<div class="field"><label>Priority</label><div class="seg" id="fPriSeg">' +
+            PRIORITIES.map(p=>'<button type="button" data-pri="'+p+'" class="'+(d.priority===p?'on':'')+'" style="'+(d.priority===p?('background:'+priMeta(p).c+';border-color:'+priMeta(p).c):'')+'">'+p+'</button>').join('') +
+          '</div></div>' +
+        '</div>' +
+        '<div class="field"><label for="fLocation">Location / area <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="text" id="fLocation" placeholder="e.g. 3rd floor, Meeting Room B" value="'+esc(d.location)+'"></div>' +
+        '<div class="field"><label for="fEngineer">Would you like a specific engineer? <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><select id="fEngineer">'+engineerOptions(d.requestedEngineer)+'</select></div>' +
+        renderAttachField() +
+        '<div style="display:flex;justify-content:flex-end"><button type="submit" class="btn primary" '+((state.uploading||state.submitting)?'disabled':'')+'>'+(state.submitting?'Sending…':'Send to DCT')+'</button></div>' +
+      '</form>';
+  }
+
+  /* ---------------- client: case status ---------------- */
+  function renderClientStatus(){
+    const f = state.clientFilter;
+    const list = myInstitutionCases();
+    return '<div class="page-head"><div><h1>Case status</h1><div class="sub">Every issue logged for '+esc(myInstitution())+'</div></div>'+clientLogoBadge()+'</div>' +
+      '<div class="filter-bar">' +
+        '<input type="text" id="cq" placeholder="Search title or ref ID..." value="'+esc(f.q)+'">' +
+        selectFilter('cStatus', ['all','Open','In Progress','Resolved','Closed'], f.status, 'Status') +
+      '</div>' +
+      (list.length===0 ?
+        '<div class="empty-state">'+ICONS.check+'<h3>No cases yet</h3><div>Anything reported for '+esc(myInstitution())+' will show up here.</div></div>' :
+        '<div class="case-list">' + list.map(c=>renderCaseRow(c)).join('') + '</div>');
+  }
+
+  /* ---------------- meetings (Connection) ---------------- */
+  function renderMeetingFormCard(){
+    const d = ensureMeetingDraft();
+    const instSegHtml = isStaff() ?
+      '<div class="field"><label>Which building is this for?</label><div class="seg" id="mInstSeg">' +
+        INSTITUTIONS.map(i=>'<button type="button" data-inst="'+i+'" class="'+(d.institution===i?'on':'')+'">'+i+'</button>').join('') +
+      '</div></div>' : '';
+    return '<form class="card form-card" id="newMeetingForm">' +
+        instSegHtml +
+        '<div class="field"><label for="mRequestedBy">Your name</label><input type="text" id="mRequestedBy" value="'+esc(d.requestedBy)+'" required></div>' +
+        '<div class="field"><label for="mPurpose">Purpose of the meeting</label><textarea id="mPurpose" placeholder="What would you like to discuss?">'+esc(d.purpose)+'</textarea></div>' +
+        '<div class="row2">' +
+          '<div class="field"><label for="mDate">Date</label><input type="date" id="mDate" value="'+esc(d.date)+'" required></div>' +
+          '<div class="field"><label for="mTime">Time</label><input type="time" id="mTime" value="'+esc(d.time)+'" required></div>' +
+        '</div>' +
+        '<div class="field"><label for="mDuration">Duration</label><select id="mDuration">' + DURATIONS.map(x=>'<option value="'+x+'" '+(String(d.durationMinutes)===String(x)?'selected':'')+'>'+x+' minutes</option>').join('') + '</select></div>' +
+        '<div class="field"><label>Which engineer(s) would you like? <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional — pick as many as you\'d like, or leave blank for anyone available)</span></label><div class="seg" id="mEngSeg">' +
+          ENGINEERS.map(n=>'<button type="button" data-eng="'+n+'" class="'+(d.engineers.indexOf(n)>=0?'on':'')+'">'+n+'</button>').join('') +
+        '</div></div>' +
+        '<div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn ghost" data-nav="'+(isStaff()?'meetings':'connection')+'">Cancel</button><button type="submit" class="btn primary" '+(state.submitting?'disabled':'')+'>'+(state.submitting?'Scheduling…':'Schedule meeting')+'</button></div>' +
+      '</form>';
+  }
+  function renderNewMeetingPage(){
+    return '<div class="page-head"><div><h1>Schedule a meeting</h1><div class="sub">Book time with the team, for either building.</div></div></div>' +
+      renderMeetingFormCard();
+  }
+  function renderMeetingsView(){
+    const f = state.meetingFilters;
+    const list = filteredMeetings();
+    return '<div class="page-head"><div><h1>Meetings</h1><div class="sub">Every meeting requested by Norrsken House and The Hut Hotel — your team\'s calendar.</div></div>' +
+      '<button class="btn primary" data-nav="newMeeting">'+ICONS.plus+' Schedule meeting</button></div>' +
+      '<div class="filter-bar">' +
+        selectFilter('mInstitution', ['all'].concat(INSTITUTIONS), f.institution, 'Building') +
+        selectFilter('mStatus2', ['all','Requested','Confirmed','Completed','Declined','Cancelled'], f.status, 'Status') +
+      '</div>' +
+      (list.length===0 ?
+        '<div class="empty-state">'+ICONS.calendar+'<h3>Nothing scheduled</h3><div>Meetings requested by either building will show up here.</div></div>' :
+        '<div class="case-list">' + list.map(m=>renderMeetingRow(m)).join('') + '</div>');
+  }
+  function renderClientConnection(){
+    const f = state.clientMeetingFilter;
+    const list = myInstitutionMeetings();
+    return '<div class="page-head"><div><h1>Connection</h1><div class="sub">Schedule time with the DCT team for '+esc(myInstitution())+' — purpose, date, time and who you\'d like there.</div></div>'+clientLogoBadge()+'</div>' +
+      renderMeetingFormCard() +
+      '<div class="section-title" style="margin-top:24px">Your meetings ('+list.length+')</div>' +
+      '<div class="filter-bar">' + selectFilter('mStatus', ['all','Requested','Confirmed','Completed','Declined','Cancelled'], f.status, 'Status') + '</div>' +
+      (list.length===0 ?
+        '<div class="empty-state">'+ICONS.calendar+'<h3>No meetings yet</h3><div>Anything you schedule will show up here.</div></div>' :
+        '<div class="case-list">' + list.map(m=>renderMeetingRow(m)).join('') + '</div>');
+  }
+  function renderMeetingRow(m){
+    const sm = meetingStatusMeta(m.status), im = instMeta(m.institution);
+    const nextLabel = MEETING_STATUS_ACTION_LABEL[m.status];
+    const engText = (m.engineers && m.engineers.length) ? m.engineers.join(', ') : 'Any available';
+    return '<div class="case-row" style="--stripe:'+sm.c+'" data-open-meeting="'+m.id+'">' +
+      '<div class="refid mono">'+esc(m.refId)+'</div>' +
+      '<div class="main">' +
+        '<div class="title">'+esc(m.purpose || 'Meeting request')+'</div>' +
+        '<div class="meta">' +
+          (isStaff() ? '<span class="pill" style="color:'+im.c+';background:'+im.bg+'">'+esc(m.institution)+'</span>' : '') +
+          '<span class="pill pill-category">'+ICONS.calendar+' '+fmtMeetingWhen(m)+'</span>' +
+          '<span class="pill pill-category" style="color:var(--accent-strong);border-color:var(--accent)">'+esc(engText)+'</span>' +
+          '<span class="muted">'+esc(m.requestedBy)+(isStaff() && m.requestedByClientId ? ' <span class="mono">('+esc(m.requestedByClientId)+')</span>' : '')+' · '+fmtRelative(m.createdAt)+'</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="side">' +
+        '<span class="pill" style="color:'+sm.c+';background:'+sm.bg+'">'+sm.label+'</span>' +
+        (isStaff() && nextLabel && canActOnMeeting(m) ? '<button class="btn small" data-quick-meeting="'+m.id+'">'+nextLabel+'</button>' : '') +
+      '</div>' +
+    '</div>';
+  }
+  function renderMeetingDetailModal(){
+    const m = state.meetings.find(x=>x.id===state.meetingDetailId);
+    if(!m) return '';
+    const sm = meetingStatusMeta(m.status), im = instMeta(m.institution);
+    const hist = (m.history||[]).slice().reverse();
+    const nextLabel = MEETING_STATUS_ACTION_LABEL[m.status];
+    const staff = isStaff();
+    const engText = (m.engineers && m.engineers.length) ? m.engineers.join(', ') : 'Any available — no preference';
+    return '<div class="overlay" id="meetingDetailOverlay">' +
+      '<div class="modal">' +
+        '<div class="modal-head"><div>' +
+          '<div class="mono" style="font-size:11.5px;color:var(--text-muted)">'+esc(m.refId)+'</div>' +
+          '<h2 style="font-size:17px;margin-top:2px">'+esc(m.purpose || 'Meeting request')+'</h2>' +
+          '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
+            '<span class="pill" style="color:'+im.c+';background:'+im.bg+'">'+esc(m.institution)+'</span>' +
+            '<span class="pill" style="color:'+sm.c+';background:'+sm.bg+'">'+sm.label+'</span>' +
+          '</div>' +
+        '</div><button class="icon-btn" id="closeMeetingDetail">'+ICONS.x+'</button></div>' +
+        '<div class="modal-body">' +
+          '<div class="detail-grid">' +
+            kv('Requested by', esc(m.requestedBy)+(staff?(' · '+esc(m.requestedByRole)+(m.requestedByClientId?(' · '+esc(m.requestedByClientId)):'')):'')) +
+            kv('Requested at', fmtFull(m.createdAt)) +
+            kv('Date and time', fmtMeetingWhen(m)) +
+            kv('Engineers requested', esc(engText)) +
+          '</div>' +
+          (staff ? (
+            isViewer() ? (
+              '<div class="gate-hint">You have view-only access — you can see every meeting here, but can\'t change its status or add updates.</div>'
+            ) : (
+              (canActOnMeeting(m) ? (
+                '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+                  (nextLabel ? '<button class="btn primary small" data-mact="advance" data-id="'+m.id+'">'+nextLabel+'</button>' : '') +
+                  (m.status==='Requested' ? '<button class="btn small" data-mact="decline" data-id="'+m.id+'">Decline</button>' : '') +
+                  ((m.status==='Requested'||m.status==='Confirmed') ? '<button class="btn small" data-mact="cancel" data-id="'+m.id+'">Cancel</button>' : '') +
+                  ((m.status==='Declined'||m.status==='Cancelled'||m.status==='Completed') ? '<button class="btn small" data-mact="reopen" data-id="'+m.id+'">Reopen</button>' : '') +
+                '</div>'
+              ) : '<div class="gate-hint">Only '+esc(engText)+' can confirm or update this meeting\'s status. You can still add an update below.</div>') +
+              '<div class="field"><label for="meetingCommentInput">Add update</label><div style="display:flex;gap:6px"><input type="text" id="meetingCommentInput" placeholder="e.g. Moved to Room B"><button class="btn small" id="meetingCommentBtn" data-id="'+m.id+'">Add</button></div></div>'
+            )
+          ) : (
+            '<div class="field"><label for="meetingCommentInput">Add an update for DCT</label><div style="display:flex;gap:6px"><input type="text" id="meetingCommentInput" placeholder="e.g. Please move to 4pm"><button class="btn small" id="meetingCommentBtn" data-id="'+m.id+'">Add</button></div></div>'
+          )) +
+          '<div class="section-title" style="margin-top:4px">History ('+hist.length+')</div>' +
+          '<div class="timeline">' + hist.map(h=>renderTlItem(h)).join('') + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ---------------- detail modal ---------------- */
+  function renderDetailModal(){
+    const c = state.cases.find(x=>x.id===state.detailId);
+    if(!c) return '';
+    const sm = statusMeta(c.status), pm = priMeta(c.priority), im = instMeta(c.institution);
+    const hist = (c.history||[]).slice().reverse();
+    const nextLabel = STATUS_ACTION_LABEL[c.status];
+    const staff = isStaff();
+    return '<div class="overlay" id="detailOverlay">' +
+      '<div class="modal">' +
+        '<div class="modal-head"><div>' +
+          '<div class="mono" style="font-size:11.5px;color:var(--text-muted)">'+esc(c.refId)+'</div>' +
+          '<h2 style="font-size:17px;margin-top:2px">'+esc(c.title)+'</h2>' +
+          '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
+            '<span class="pill" style="color:'+im.c+';background:'+im.bg+'">'+esc(c.institution)+'</span>' +
+            '<span class="pill" style="color:'+sm.c+';background:'+sm.bg+'">'+sm.label+'</span>' +
+            '<span class="pill" style="color:'+pm.c+';background:'+pm.bg+'"><span class="dot"></span>'+esc(c.priority)+'</span>' +
+            '<span class="pill pill-category">'+esc(c.category)+'</span>' +
+          '</div>' +
+        '</div><button class="icon-btn" id="closeDetail">'+ICONS.x+'</button></div>' +
+        '<div class="modal-body">' +
+          (c.description ? '<div style="font-size:13.5px">'+esc(c.description)+'</div>' : '') +
+          renderProofGallery(c.attachments) +
+          '<div class="detail-grid">' +
+            kv('Reported by', esc(c.reportedBy)+(staff?(' · '+esc(c.reportedByRole)+(c.reportedByClientId?(' · '+esc(c.reportedByClientId)):'')):'')) +
+            kv('Reported at', fmtFull(c.reportedAt)) +
+            kv('Location', c.location? esc(c.location) : '—') +
+            kv('Requested engineer', c.requestedEngineer? esc(c.requestedEngineer) : '— no preference') +
+            kv('Assigned to', c.assignedTo? esc(c.assignedTo) : '— unassigned') +
+            kv('Resolved at', fmtFull(c.resolvedAt)) +
+            kv('Closing remark', c.closingRemark? esc(c.closingRemark) : '—') +
+          '</div>' +
+          (staff ? (
+            isViewer() ? (
+              '<div class="gate-hint">You have view-only access — you can see every detail here, but can\'t change status, assign, or comment.</div>'
+            ) : (
+              (c.status==='Resolved' ?
+                '<div class="field"><label for="closingRemarkInput">Closing remark <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional — added to the case when you close it)</span></label><textarea id="closingRemarkInput" placeholder="Anything worth noting before this is closed..."></textarea></div>'
+              : '') +
+              '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+                (nextLabel ? '<button class="btn primary small" data-act="advance" data-id="'+c.id+'">'+nextLabel+'</button>' : '') +
+                ((c.status==='Resolved'||c.status==='Closed') ? '<button class="btn small" data-act="reopen" data-id="'+c.id+'">Reopen</button>' : '') +
+              '</div>' +
+              '<div class="row2">' +
+                '<div class="field"><label for="assignInput">Assign to</label><div style="display:flex;gap:6px"><select id="assignInput">'+engineerOptions(c.assignedTo||c.requestedEngineer||'', 'Unassigned — pick an engineer')+'</select><button class="btn small" id="assignBtn" data-id="'+c.id+'">Set</button></div></div>' +
+                '<div class="field"><label for="commentInput">Add update</label><div style="display:flex;gap:6px"><input type="text" id="commentInput" placeholder="e.g. Waiting on ISP callback"><button class="btn small" id="commentBtn" data-id="'+c.id+'">Add</button></div></div>' +
+              '</div>'
+            )
+          ) : (
+            '<div class="field"><label for="commentInput">Add an update for DCT</label><div style="display:flex;gap:6px"><input type="text" id="commentInput" placeholder="e.g. Still happening, now also on 2nd floor"><button class="btn small" id="commentBtn" data-id="'+c.id+'">Add</button></div></div>'
+          )) +
+          '<div class="section-title" style="margin-top:4px">History ('+hist.length+')</div>' +
+          '<div class="timeline">' + hist.map(h=>renderTlItem(h)).join('') + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  function kv(k,v){ return '<div class="kv"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'; }
+  function renderTlItem(h){
+    return '<div class="tl-item"><div class="tl-dot"></div><div class="tl-body">' +
+      '<div class="tl-top"><span class="tl-actor">'+esc(h.actor)+' <span style="color:var(--text-muted);font-weight:500">('+esc(h.actorRole)+')</span></span><span class="tl-time mono">'+fmtFull(h.ts)+'</span></div>' +
+      (h.note? '<div class="tl-note">'+esc(h.note)+'</div>' : '') +
+    '</div></div>';
+  }
+
+  /* ---------------- access gate ---------------- */
+  function renderIdentityOverlay(){
+    const role = state.gatePendingRole;
+    return '<div class="overlay"><div class="modal" style="max-width:440px">' +
+      '<div class="modal-head"><div><h2 style="font-size:17px">Who\'s opening this?</h2><div class="sub" style="margin-top:4px;color:var(--text-muted);font-size:12.5px">Pick your team, then enter the access code you were given.</div></div>' +
+      (state.identity ? '<button class="icon-btn" id="closeIdModal">'+ICONS.x+'</button>' : '') + '</div>' +
+      '<div class="modal-body">' +
+        '<div style="display:flex;flex-direction:column;gap:10px">' +
+          gateCard('dct', role) + gateCard('norrsken', role) + gateCard('hut', role) +
+        '</div>' +
+        (role ? (
+          '<div class="field"><label for="gateCode">Access code</label><input type="text" id="gateCode" placeholder="Enter your team\'s code" autocomplete="off" value="'+esc(state.gateCode)+'"></div>' +
+          '<div class="field"><label for="gateName">'+(role==='dct'?'Which engineer are you?':'Who are you?')+'</label><select id="gateName"><option value="">Select your name…</option>' +
+            ROLE_ROSTER[role].map(n=>'<option '+((state.gateName||(state.identity&&state.identity.role===role?state.identity.name:''))===n?'selected':'')+'>'+n+'</option>').join('') +
+          '</select></div>' +
+          (state.gateError ? '<div class="gate-error">'+esc(state.gateError)+'</div>' : '<div class="gate-hint">Don\'t have a code? Ask your DCT contact for it.</div>') +
+          '<button class="btn primary" id="saveIdentity" style="align-self:flex-end">Continue</button>'
+        ) : '') +
+      '</div>' +
+    '</div></div>';
+  }
+  function gateCard(role, current){
+    const a = ACCESS[role];
+    return '<div class="id-card '+(current===role?'on':'')+'" data-role="'+role+'">' +
+      '<div class="logo-badge" style="width:110px;height:56px;padding:6px;flex:none"><img src="'+LOGOS[role]+'" alt="" style="width:100%;height:100%"></div>' +
+      '<div class="id-card-text"><b>'+esc(a.label)+'</b><span>'+esc(a.sub)+'</span></div>' +
+    '</div>';
+  }
+
+  /* ---------------- bell ---------------- */
+  function renderBellPop(){
+    const caseList = unreadCases();
+    const meetingList = unreadMeetings();
+    const empty = caseList.length===0 && meetingList.length===0;
+    return '<div class="bell-pop" id="bellPop">' +
+      '<div class="bp-head">New since your last visit</div>' +
+      '<div class="bp-list">' + (empty ? '<div class="bp-empty">Nothing new. You\'re caught up.</div>' : (
+        caseList.map(c=>'<div class="bp-item" data-open="'+c.id+'"><div class="t">'+esc(c.refId)+' · '+esc(c.title)+'</div><div class="m">'+esc(c.institution)+' · '+esc(c.reportedBy)+' · '+fmtRelative(c.reportedAt)+(c.requestedEngineer?(' · for '+esc(c.requestedEngineer)):'')+'</div></div>').join('') +
+        meetingList.map(m=>'<div class="bp-item" data-open-meeting="'+m.id+'"><div class="t">'+esc(m.refId)+' · Meeting request</div><div class="m">'+esc(m.institution)+' · '+esc(m.requestedBy)+' · '+fmtMeetingWhen(m)+' · '+fmtRelative(m.createdAt)+'</div></div>').join('')
+      )) +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ---------------- events ---------------- */
+  function wireEvents(){
+    document.querySelectorAll('[data-nav]').forEach(el=> el.addEventListener('click', ()=>{ state.view = el.getAttribute('data-nav'); state.bellOpen=false; render(); }));
+
+    const bellBtn = document.getElementById('bellBtn');
+    if(bellBtn) bellBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      state.bellOpen = !state.bellOpen;
+      if(state.bellOpen){ state.lastSeenAt = Date.now(); try{ localStorage.setItem('nsd_lastSeen', String(state.lastSeenAt)); }catch(err){} }
+      render();
+    });
+    const bellPop = document.getElementById('bellPop');
+    if(bellPop) bellPop.addEventListener('click', (e)=> e.stopPropagation());
+    document.querySelectorAll('#bellPop [data-open]').forEach(el=> el.addEventListener('click', ()=>{ state.detailId = el.getAttribute('data-open'); state.bellOpen=false; render(); }));
+    document.querySelectorAll('#bellPop [data-open-meeting]').forEach(el=> el.addEventListener('click', ()=>{ state.meetingDetailId = el.getAttribute('data-open-meeting'); state.bellOpen=false; render(); }));
+    if(state.bellOpen) document.addEventListener('click', function h(){ state.bellOpen=false; render(); document.removeEventListener('click',h); }, {once:true});
+
+    const idChip = document.getElementById('idChipBtn');
+    if(idChip) idChip.addEventListener('click', ()=>{ state.identityModal = true; state.gatePendingRole = state.identity.role; state.gateError=''; state.gateCode=''; state.gateName=''; render(); });
+    const closeIdModal = document.getElementById('closeIdModal');
+    if(closeIdModal) closeIdModal.addEventListener('click', ()=>{ state.identityModal = false; state.gatePendingRole=null; state.gateError=''; state.gateCode=''; state.gateName=''; render(); });
+
+    document.querySelectorAll('.id-card[data-role]').forEach(el=> el.addEventListener('click', ()=>{
+      state.gatePendingRole = el.getAttribute('data-role');
+      state.gateError = '';
+      render();
+      const codeEl = document.getElementById('gateCode'); if(codeEl) codeEl.focus();
+    }));
+    const gateCodeEl = document.getElementById('gateCode');
+    if(gateCodeEl) gateCodeEl.addEventListener('input', ()=>{ state.gateCode = gateCodeEl.value; });
+    const gateNameEl = document.getElementById('gateName');
+    if(gateNameEl){
+      gateNameEl.addEventListener('input', ()=>{ state.gateName = gateNameEl.value; });
+      gateNameEl.addEventListener('change', ()=>{ state.gateName = gateNameEl.value; });
+    }
+    const saveIdBtn = document.getElementById('saveIdentity');
+    if(saveIdBtn) saveIdBtn.addEventListener('click', ()=>{
+      const role = state.gatePendingRole;
+      const code = document.getElementById('gateCode').value.trim();
+      const name = document.getElementById('gateName').value.trim();
+      state.gateCode = code; state.gateName = name;
+      if(!name){ state.gateError = 'Please select your name.'; render(); return; }
+      if(code.toUpperCase() !== ACCESS[role].code.toUpperCase()){
+        state.gateError = "That code doesn't match. Double-check with your DCT contact.";
+        render(); return;
+      }
+      const prevIdentity = state.identity;
+      const keepId = (state.identity && state.identity.role===role && state.identity.clientId) ? state.identity.clientId : null;
+      const clientId = role==='dct' ? null : (keepId || genClientId(role));
+      state.identity = clientId ? { role, name, clientId } : { role, name };
+      try{ localStorage.setItem('nsd_identity_v2', JSON.stringify(state.identity)); }catch(e){}
+      // A different person (or a different team) signing in should never inherit whatever the last
+      // person was mid-typing — clear any in-progress case/meeting drafts so fields like "Reported by"
+      // and "Your name" re-fill for the new identity instead of carrying the old one over.
+      if(!prevIdentity || prevIdentity.role!==role || prevIdentity.name!==name){
+        state.formDraft = null;
+        state.meetingFormDraft = null;
+      }
+      state.identityModal = false; state.gatePendingRole = null; state.gateError = '';
+      state.gateCode = ''; state.gateName = '';
+      state.view = role==='dct' ? 'dashboard' : 'report';
+      render();
+    });
+
+    document.querySelectorAll('[data-open]').forEach(el=>{
+      if(el.closest('#bellPop')) return;
+      el.addEventListener('click', ()=>{ state.detailId = el.getAttribute('data-open'); render(); });
+    });
+    document.querySelectorAll('[data-quick]').forEach(el=> el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const c = state.cases.find(x=>x.id===el.getAttribute('data-quick'));
+      if(c) advanceStatus(c, '');
+    }));
+
+    document.querySelectorAll('[data-open-meeting]').forEach(el=>{
+      if(el.closest('#bellPop')) return;
+      el.addEventListener('click', ()=>{ state.meetingDetailId = el.getAttribute('data-open-meeting'); render(); });
+    });
+    document.querySelectorAll('[data-quick-meeting]').forEach(el=> el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const m = state.meetings.find(x=>x.id===el.getAttribute('data-quick-meeting'));
+      if(m) advanceMeeting(m, '');
+    }));
+
+    const closeMeetingDetail = document.getElementById('closeMeetingDetail');
+    if(closeMeetingDetail) closeMeetingDetail.addEventListener('click', ()=>{ state.meetingDetailId=null; render(); });
+    const meetingOverlay = document.getElementById('meetingDetailOverlay');
+    if(meetingOverlay) meetingOverlay.addEventListener('click', (e)=>{ if(e.target===meetingOverlay){ state.meetingDetailId=null; render(); } });
+
+    document.querySelectorAll('[data-mact="advance"]').forEach(el=> el.addEventListener('click', ()=>{
+      const m = state.meetings.find(x=>x.id===el.getAttribute('data-id'));
+      if(!m) return;
+      advanceMeeting(m, '');
+      state.meetingDetailId = null; render();
+    }));
+    document.querySelectorAll('[data-mact="decline"]').forEach(el=> el.addEventListener('click', ()=>{
+      const m = state.meetings.find(x=>x.id===el.getAttribute('data-id'));
+      if(!m) return;
+      const note = prompt('Reason for declining (optional)?','') || '';
+      declineMeeting(m, note);
+      state.meetingDetailId = null; render();
+    }));
+    document.querySelectorAll('[data-mact="cancel"]').forEach(el=> el.addEventListener('click', ()=>{
+      const m = state.meetings.find(x=>x.id===el.getAttribute('data-id'));
+      if(!m) return;
+      const note = prompt('Reason for cancelling (optional)?','') || '';
+      cancelMeeting(m, note);
+      state.meetingDetailId = null; render();
+    }));
+    document.querySelectorAll('[data-mact="reopen"]').forEach(el=> el.addEventListener('click', ()=>{
+      const m = state.meetings.find(x=>x.id===el.getAttribute('data-id'));
+      if(!m) return;
+      reopenMeeting(m, '');
+      state.meetingDetailId = null; render();
+    }));
+    const meetingCommentBtn = document.getElementById('meetingCommentBtn');
+    if(meetingCommentBtn) meetingCommentBtn.addEventListener('click', ()=>{
+      const m = state.meetings.find(x=>x.id===meetingCommentBtn.getAttribute('data-id'));
+      const inp = document.getElementById('meetingCommentInput');
+      if(m) addMeetingComment(m, inp.value);
+      if(inp) inp.value='';
+    });
+
+    const closeDetail = document.getElementById('closeDetail');
+    if(closeDetail) closeDetail.addEventListener('click', ()=>{ state.detailId=null; render(); });
+    const overlay = document.getElementById('detailOverlay');
+    if(overlay) overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ state.detailId=null; render(); } });
+
+    document.querySelectorAll('[data-act="advance"]').forEach(el=> el.addEventListener('click', ()=>{
+      const c = state.cases.find(x=>x.id===el.getAttribute('data-id'));
+      if(!c) return;
+      let note = '';
+      if(c.status==='In Progress'){ note = prompt('Resolution note (what fixed it)?','') || ''; }
+      else if(c.status==='Resolved'){ const remarkEl = document.getElementById('closingRemarkInput'); note = remarkEl ? remarkEl.value : ''; }
+      advanceStatus(c, note);
+      state.detailId = null; render();
+    }));
+    document.querySelectorAll('[data-act="reopen"]').forEach(el=> el.addEventListener('click', ()=>{
+      const c = state.cases.find(x=>x.id===el.getAttribute('data-id'));
+      if(!c) return;
+      const note = prompt('Why is this reopening?','') || '';
+      reopenCase(c, note);
+      state.detailId = null; render();
+    }));
+    const assignBtn = document.getElementById('assignBtn');
+    if(assignBtn) assignBtn.addEventListener('click', ()=>{
+      const c = state.cases.find(x=>x.id===assignBtn.getAttribute('data-id'));
+      const val = document.getElementById('assignInput').value;
+      if(c) assignCase(c, val);
+    });
+    const commentBtn = document.getElementById('commentBtn');
+    if(commentBtn) commentBtn.addEventListener('click', ()=>{
+      const c = state.cases.find(x=>x.id===commentBtn.getAttribute('data-id'));
+      const inp = document.getElementById('commentInput');
+      if(c) addComment(c, inp.value);
+      if(inp) inp.value='';
+    });
+
+    /* new case form (DCT + client share the same wiring; DCT has an institution seg, client doesn't) */
+    const instSeg = document.getElementById('fInstSeg');
+    if(instSeg) instSeg.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+      instSeg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      ensureFormDraft().institution = b.getAttribute('data-inst');
+    }));
+    const priSeg = document.getElementById('fPriSeg');
+    if(priSeg) priSeg.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+      priSeg.querySelectorAll('button').forEach(x=>{ x.classList.remove('on'); x.style.background=''; x.style.borderColor=''; x.style.color=''; });
+      b.classList.add('on'); const p = b.getAttribute('data-pri'); const m = priMeta(p);
+      b.style.background = m.c; b.style.borderColor = m.c; b.style.color = '#fff';
+      ensureFormDraft().priority = p;
+    }));
+    const bindDraftText = (id,key)=>{ const el=document.getElementById(id); if(el) el.addEventListener('input', ()=>{ ensureFormDraft()[key]=el.value; }); };
+    bindDraftText('fReportedBy','reportedBy'); bindDraftText('fTitle','title'); bindDraftText('fDesc','description'); bindDraftText('fLocation','location');
+    const bindDraftSelect = (id,key)=>{ const el=document.getElementById(id); if(el) el.addEventListener('change', ()=>{ ensureFormDraft()[key]=el.value; }); };
+    bindDraftSelect('fCategory','category'); bindDraftSelect('fEngineer','requestedEngineer');
+
+    const fAttach = document.getElementById('fAttach');
+    if(fAttach) fAttach.addEventListener('change', async ()=>{
+      const files = Array.from(fAttach.files || []);
+      fAttach.value = '';
+      const okTypes = ['image/png','image/jpeg','image/gif','image/webp','video/mp4','video/webm'];
+      for(const file of files){
+        const draft = ensureFormDraft();
+        if(draft.attachments.length >= 4){ toast('You can attach up to 4 files per case.'); break; }
+        if(file.size > 20*1024*1024){ toast(file.name+' is over 20MB — try a smaller file.'); continue; }
+        if(!okTypes.includes(file.type)){ toast(file.name+" isn't a supported type — use JPG, PNG, GIF, WEBP, MP4 or WEBM."); continue; }
+        if(!state.assetsApi){ toast('Attachments are unavailable in this view.'); break; }
+        state.uploading = true; render();
+        try{
+          const res = await uploadAsset(file);
+          ensureFormDraft().attachments.push({ id:res.id, url:res.url, contentType:res.contentType, name:file.name, sizeBytes:res.sizeBytes });
+        }catch(err){ toast('Could not attach '+file.name+' ('+(err&&err.message)+').'); }
+        state.uploading = false;
+        render();
+      }
+    });
+    document.querySelectorAll('[data-remove-attach]').forEach(el=> el.addEventListener('click', ()=>{
+      const idx = parseInt(el.getAttribute('data-remove-attach'),10);
+      const draft = ensureFormDraft();
+      const removed = draft.attachments.splice(idx,1)[0];
+      render();
+      if(removed && state.assetsApi) deleteAsset(removed);
+    }));
+
+    const form = document.getElementById('newCaseForm');
+    if(form) form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const draft = ensureFormDraft();
+      const title = (draft.title||'').trim();
+      if(!title){ toast('Please add a short title.'); return; }
+      const institution = isStaff() ? draft.institution : myInstitution();
+      createCase({
+        institution,
+        title,
+        description: (draft.description||'').trim(),
+        category: draft.category,
+        priority: draft.priority,
+        location: (draft.location||'').trim(),
+        reportedBy: (draft.reportedBy||'').trim() || state.identity.name,
+        reportedByRole: isStaff() ? 'DCT' : 'Client',
+        reportedByClientId: isStaff() ? '' : (state.identity.clientId || ''),
+        requestedEngineer: draft.requestedEngineer || '',
+        attachments: draft.attachments.slice()
+      });
+    });
+
+    /* meeting form (DCT + client share the same wiring; DCT has an institution seg, client doesn't) */
+    const mInstSeg = document.getElementById('mInstSeg');
+    if(mInstSeg) mInstSeg.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+      mInstSeg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      ensureMeetingDraft().institution = b.getAttribute('data-inst');
+    }));
+    const bindMeetingText = (id,key)=>{ const el=document.getElementById(id); if(el) el.addEventListener('input', ()=>{ ensureMeetingDraft()[key]=el.value; }); };
+    bindMeetingText('mRequestedBy','requestedBy'); bindMeetingText('mPurpose','purpose'); bindMeetingText('mDate','date'); bindMeetingText('mTime','time');
+    const mDurationEl = document.getElementById('mDuration');
+    if(mDurationEl) mDurationEl.addEventListener('change', ()=>{ ensureMeetingDraft().durationMinutes = parseInt(mDurationEl.value,10); });
+    const mEngSeg = document.getElementById('mEngSeg');
+    if(mEngSeg) mEngSeg.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+      const name = b.getAttribute('data-eng');
+      const draft = ensureMeetingDraft();
+      const idx = draft.engineers.indexOf(name);
+      if(idx>=0){ draft.engineers.splice(idx,1); b.classList.remove('on'); }
+      else { draft.engineers.push(name); b.classList.add('on'); }
+    }));
+    const meetingForm = document.getElementById('newMeetingForm');
+    if(meetingForm) meetingForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const draft = ensureMeetingDraft();
+      if(!draft.date || !draft.time){ toast('Please pick a date and time.'); return; }
+      const institution = isStaff() ? draft.institution : myInstitution();
+      createMeeting({
+        institution,
+        purpose: (draft.purpose||'').trim(),
+        date: draft.date,
+        time: draft.time,
+        durationMinutes: draft.durationMinutes || 30,
+        engineers: draft.engineers.slice(),
+        requestedBy: (draft.requestedBy||'').trim() || state.identity.name,
+        requestedByRole: isStaff() ? 'DCT' : 'Client',
+        requestedByClientId: isStaff() ? '' : (state.identity.clientId || '')
+      });
+    });
+
+    /* DCT: meetings filters */
+    bindSelect('mInstitution', state.meetingFilters, 'institution'); bindSelect('mStatus2', state.meetingFilters, 'status');
+    /* client: meeting filter */
+    bindSelect('mStatus', state.clientMeetingFilter, 'status');
+
+    /* DCT: all cases filters */
+    const fq = document.getElementById('fq');
+    if(fq) fq.addEventListener('input', ()=>{ state.filters.q = fq.value; render(); const el=document.getElementById('fq'); if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length);} });
+    bindSelect('fInstitution', state.filters, 'institution'); bindSelect('fStatus', state.filters, 'status');
+    bindSelect('fCategory2', state.filters, 'category'); bindSelect('fPriority2', state.filters, 'priority'); bindSelect('fSort', state.filters, 'sort');
+    const exportBtn = document.getElementById('exportBtn');
+    if(exportBtn) exportBtn.addEventListener('click', ()=> exportCsv(filteredCases()));
+
+    /* client: status filters */
+    const cq = document.getElementById('cq');
+    if(cq) cq.addEventListener('input', ()=>{ state.clientFilter.q = cq.value; render(); const el=document.getElementById('cq'); if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length);} });
+    bindSelect('cStatus', state.clientFilter, 'status');
+
+    /* attendance */
+    const attLocSeg = document.getElementById('attLocSeg');
+    if(attLocSeg) attLocSeg.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+      attLocSeg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      state.attendanceLocationDraft = b.getAttribute('data-loc');
+    }));
+    const attCheckInBtn = document.getElementById('attCheckInBtn');
+    if(attCheckInBtn) attCheckInBtn.addEventListener('click', attemptCheckIn);
+    const attCheckOutBtn = document.getElementById('attCheckOutBtn');
+    if(attCheckOutBtn) attCheckOutBtn.addEventListener('click', attemptCheckOut);
+    const attRetryLocBtn = document.getElementById('attRetryLocBtn');
+    if(attRetryLocBtn) attRetryLocBtn.addEventListener('click', ()=>{
+      const rec = myAttendanceToday();
+      if(rec && rec.checkInAt && !rec.checkOutAt) attemptCheckOut(); else attemptCheckIn();
+    });
+    const attCheckInFallbackBtn = document.getElementById('attCheckInFallbackBtn');
+    if(attCheckInFallbackBtn) attCheckInFallbackBtn.addEventListener('click', ()=> checkInWithFallback(ensureAttendanceDraft()));
+    const attCheckOutFallbackBtn = document.getElementById('attCheckOutFallbackBtn');
+    if(attCheckOutFallbackBtn) attCheckOutFallbackBtn.addEventListener('click', ()=> checkOutWithFallback(ensureAttendanceDraft()));
+    bindSelect('attFilterName', state.attendanceFilter, 'person');
+    bindSelect('attFilterMonth', state.attendanceFilter, 'month');
+    const attExportBtn = document.getElementById('attExportBtn');
+    if(attExportBtn) attExportBtn.addEventListener('click', ()=>{
+      const f = state.attendanceFilter;
+      let list = state.attendance.slice();
+      if(f.person!=='all') list = list.filter(a=>a.name===f.person);
+      if(f.month!=='all') list = list.filter(a=>a.date.slice(0,7)===f.month);
+      list.sort((a,b)=> a.date.localeCompare(b.date) || (a.name<b.name?-1:1));
+      exportAttendanceCsv(list);
+    });
+  }
+  function bindSelect(id, target, key){
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('change', ()=>{ target[key] = el.value; render(); });
+  }
+
+  /* ---------------- boot ---------------- */
+  render();
+  initDb();
+  initDownloads();
+  initAssets();
+
+})();
+</script>
+</body>
+</html>
