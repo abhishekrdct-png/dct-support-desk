@@ -372,9 +372,12 @@
   const STATUS_ACTION_LABEL = {Open:'Start progress','In Progress':'Mark resolved', Resolved:'Close case'};
 
   const INSTITUTIONS = ['Norrsken House','The Hut Hotel'];
-  // Shared access codes. Change these any time by asking for an update — each covers one team.
+  // Shared access codes for the two client institutions. Change these any time by asking for an
+  // update — each covers everyone at that institution. DCT does NOT use a shared code (see
+  // DCT_PERSON_CODES below) — each DCT person has their own individual code instead, so one
+  // person's code can't be used to sign in as someone else on their team.
   const ACCESS = {
-    dct:      { code:'DCTTEAM7',  label:'DATA CENTRE TECHNOLOGIES',  sub:'Full access — manage every case' },
+    dct:      { label:'DATA CENTRE TECHNOLOGIES',  sub:'Full access — manage every case' },
     norrsken: { code:'NSKHOUSE',  label:'Norrsken House',   sub:'Report issues & track their status' },
     hut:      { code:'HUTHOTEL',  label:'The Hut Hotel',    sub:'Report issues & track their status' }
   };
@@ -387,7 +390,7 @@
   }
   const ENGINEERS = ['Mahesh','Robert','Eugen','Abhishek','Ernest','Fillette'];
   // The named individuals allowed to sign in for each institution — kept as a fixed roster,
-  // same idea as the DCT engineer list, so the shared access code still only ever resolves to a known person.
+  // so the shared institution access code still only ever resolves to a known person.
   const NORRSKEN_STAFF = ['Rene','Elisee'];
   const HUT_STAFF = ['Binoy Thomas','Anasari','Mariza','Rajesh'];
   // DCT people who can log in but are not engineers (e.g. accounts/admin staff): they get view-only
@@ -395,6 +398,18 @@
   const DCT_VIEWERS = ['Rajitha'];
   const DCT_STAFF = ENGINEERS.concat(DCT_VIEWERS);
   const ROLE_ROSTER = { dct: DCT_STAFF, norrsken: NORRSKEN_STAFF, hut: HUT_STAFF };
+  // Each DCT person's own individual sign-in code — not shared. Picking a name from the DCT list
+  // only works if the code typed in matches THAT person's own code below. Change any of these any
+  // time by asking for an update, and tell that one person their new code privately.
+  const DCT_PERSON_CODES = {
+    Mahesh:    'MAHESH01',
+    Robert:    'ROBERT02',
+    Eugen:     'EUGEN03',
+    Abhishek:  'ABHISHEK04',
+    Ernest:    'ERNEST05',
+    Fillette:  'FILLETTE06',
+    Rajitha:   'RAJITHA07'
+  };
   // Attendance: only these four check themselves in/out (device location is captured and required
   // both ways); only Rajitha and Mahesh can see the resulting log. Nobody else sees either.
   const ATTENDANCE_TRACKED = ['Abhishek','Eugen','Fillette','Ernest'];
@@ -842,6 +857,41 @@
     if(!state.attendanceLocationDraft) state.attendanceLocationDraft = LOCATION_OPTIONS[0];
     return state.attendanceLocationDraft;
   }
+  // A persistent, random ID stored on THIS device/browser only — never something a person types or
+  // chooses. It survives reloads and re-logins so Rajitha/Mahesh can tell whether the same phone or
+  // laptop was used to check in as more than one person on the same day (see attendanceDeviceIndex).
+  // It is not a foolproof identity check (clearing browser data resets it), but it catches the
+  // ordinary case of one person checking everyone else in from their own device.
+  function getDeviceId(){
+    try{
+      let id = localStorage.getItem('nsd_device_id');
+      if(!id){
+        id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
+        localStorage.setItem('nsd_device_id', id);
+      }
+      return id;
+    }catch(e){ return 'dev-unknown'; }
+  }
+  // A short human-readable hint (not an identifier by itself) shown alongside the device ID so
+  // Rajitha/Mahesh don't have to decode a random string to see roughly what kind of device it was.
+  function deviceLabel(){
+    try{
+      const ua = navigator.userAgent || '';
+      let os = 'Unknown device';
+      if(/iPhone/i.test(ua)) os = 'iPhone';
+      else if(/iPad/i.test(ua)) os = 'iPad';
+      else if(/Android/i.test(ua)) os = 'Android';
+      else if(/Windows/i.test(ua)) os = 'Windows';
+      else if(/Macintosh/i.test(ua)) os = 'Mac';
+      else if(/Linux/i.test(ua)) os = 'Linux';
+      let browser = '';
+      if(/Edg\//i.test(ua)) browser = 'Edge';
+      else if(/Chrome\//i.test(ua)) browser = 'Chrome';
+      else if(/Firefox\//i.test(ua)) browser = 'Firefox';
+      else if(/Safari\//i.test(ua)) browser = 'Safari';
+      return (browser ? browser+' on ' : '') + os;
+    }catch(e){ return 'Unknown device'; }
+  }
   function tryGetLocation(timeoutMs){
     timeoutMs = timeoutMs || 10000;
     return new Promise((resolve)=>{
@@ -876,7 +926,9 @@
         name: state.identity.name, date, status:'Present',
         checkInAt: now, checkInLocation: locationLabel,
         checkInLat: loc?loc.lat:null, checkInLng: loc?loc.lng:null,
+        checkInDeviceId: getDeviceId(), checkInDeviceLabel: deviceLabel(),
         checkOutAt: null, checkOutLocation: '', checkOutLat: null, checkOutLng: null,
+        checkOutDeviceId: null, checkOutDeviceLabel: '',
         updatedAt: now
       });
       toast('Checked in at '+fmtTimeOnly(now)+(loc?' with your live location.':' — '+locationLabel+'.'));
@@ -906,6 +958,7 @@
       await db.doc('attendance/'+rec.id).update({
         checkOutAt: now, checkOutLocation: locationLabel,
         checkOutLat: loc?loc.lat:null, checkOutLng: loc?loc.lng:null,
+        checkOutDeviceId: getDeviceId(), checkOutDeviceLabel: deviceLabel(),
         updatedAt: now
       });
       toast('Checked out at '+fmtTimeOnly(now)+(loc?' with your live location.':' — '+locationLabel+'.'));
@@ -1197,6 +1250,23 @@
     const d = new Date(ym+'-01T00:00:00');
     return isNaN(d) ? ym : d.toLocaleDateString(undefined,{year:'numeric', month:'long'});
   }
+  // Builds "date|deviceId" -> set of names, from the FULL attendance history (not just the current
+  // filter), so a device flagged as shared shows up no matter how the log is currently filtered.
+  // This is what lets Rajitha/Mahesh spot one phone/laptop being used to check in as several people
+  // on the same day — the thing one shared code used to make invisible.
+  function attendanceDeviceIndex(){
+    const idx = {};
+    (state.attendance||[]).forEach(a=>{
+      [['checkInDeviceId'], ['checkOutDeviceId']].forEach(([field])=>{
+        const devId = a[field];
+        if(!devId) return;
+        const key = a.date+'|'+devId;
+        if(!idx[key]) idx[key] = new Set();
+        idx[key].add(a.name);
+      });
+    });
+    return idx;
+  }
   function renderAttendanceLog(){
     const f = state.attendanceFilter;
     let list = state.attendance.slice();
@@ -1204,7 +1274,8 @@
     if(f.month!=='all') list = list.filter(a=>a.date.slice(0,7)===f.month);
     list.sort((a,b)=> b.date.localeCompare(a.date) || (a.name<b.name?-1:1));
     const months = attendanceMonthOptions();
-    return '<div class="page-head"><div><h1>Attendance</h1><div class="sub">Check-in / check-out log for Abhishek, Eugen, Fillette and Ernest — visible only to you and Mahesh. Every day is kept, so at month end you can filter to that month and export it.</div></div></div>' +
+    const deviceIdx = attendanceDeviceIndex();
+    return '<div class="page-head"><div><h1>Attendance</h1><div class="sub">Check-in / check-out log for Abhishek, Eugen, Fillette and Ernest — visible only to you and Mahesh. Every day is kept, so at month end you can filter to that month and export it. Each entry also shows which device it was recorded from, flagged in red if that same device checked in more than one person the same day.</div></div></div>' +
       '<div class="filter-bar">' +
         '<select id="attFilterName"><option value="all" '+(f.person==='all'?'selected':'')+'>Everyone</option>' +
           ATTENDANCE_TRACKED.map(n=>'<option '+(f.person===n?'selected':'')+'>'+esc(n)+'</option>').join('') +
@@ -1216,12 +1287,12 @@
       '</div>' +
       (list.length===0 ?
         '<div class="empty-state">'+ICONS.clock+'<h3>No attendance recorded</h3><div>Check-ins by the team will show up here.</div></div>' :
-        '<div class="case-list">' + list.map(a=>renderAttRow(a,true)).join('') + '</div>');
+        '<div class="case-list">' + list.map(a=>renderAttRow(a,true,deviceIdx)).join('') + '</div>');
   }
   function exportAttendanceCsv(list){
     if(!canViewAttendance()) return;
     if(!state.downloads) return toast('Export is unavailable in this view.');
-    const cols = ['name','date','status','checkInAt','checkInLocation','checkInLat','checkInLng','checkOutAt','checkOutLocation','checkOutLat','checkOutLng'];
+    const cols = ['name','date','status','checkInAt','checkInLocation','checkInLat','checkInLng','checkInDeviceId','checkInDeviceLabel','checkOutAt','checkOutLocation','checkOutLat','checkOutLng','checkOutDeviceId','checkOutDeviceLabel'];
     const rows = [cols.join(',')].concat(list.map(a => cols.map(k=>{
       let v = a[k]==null ? '' : String(a[k]);
       v = v.replace(/"/g,'""');
@@ -1232,10 +1303,28 @@
     if(saveTextFile('attendance-'+monthPart+'-'+new Date().toISOString().slice(0,10)+'.csv', csv)) toast('Attendance export saved — open it in Excel or Google Sheets.');
     else toast('Export failed — your browser blocked the download.');
   }
-  function renderAttRow(a, showName){
+  function renderAttRow(a, showName, deviceIdx){
     const dateStr = new Date(a.date+'T00:00:00').toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'});
     const inLine = a.checkInAt ? (fmtTimeOnly(a.checkInAt)+' · '+esc(a.checkInLocation||'—')+(a.checkInLat!=null?' · <a href="'+mapLink(a.checkInLat,a.checkInLng)+'" target="_blank" rel="noopener">map</a>':'')) : '—';
     const outLine = a.checkOutAt ? (fmtTimeOnly(a.checkOutAt)+' · '+esc(a.checkOutLocation||'—')+(a.checkOutLat!=null?' · <a href="'+mapLink(a.checkOutLat,a.checkOutLng)+'" target="_blank" rel="noopener">map</a>':'')) : '—';
+    // Device line only shown to Rajitha/Mahesh in the admin log (deviceIdx is only passed there) —
+    // a person's own "your recent history" view has nothing to compare against anyway.
+    let deviceLine = '';
+    if(deviceIdx){
+      const others = new Set();
+      [a.checkInDeviceId, a.checkOutDeviceId].filter(Boolean).forEach(devId=>{
+        const names = deviceIdx[a.date+'|'+devId];
+        if(names) names.forEach(n=>{ if(n!==a.name) others.add(n); });
+      });
+      const flagged = others.size > 0;
+      const label = a.checkInDeviceLabel || a.checkOutDeviceLabel || 'Unknown device';
+      // width:100% forces this onto its own line within the flex-wrap row above, instead of
+      // squeezing in beside the time columns.
+      deviceLine = '<div style="width:100%;font-size:11.5px;margin-top:2px;padding-top:8px;border-top:1px solid var(--border);color:'+(flagged?'var(--pri-urgent)':'var(--text-muted)')+'">' +
+        (flagged ? '⚠ ' : '') + 'Device: '+esc(label) +
+        (flagged ? ' — same device also checked in '+esc(Array.from(others).join(', '))+' today' : '') +
+      '</div>';
+    }
     return '<div class="att-row">' +
       (showName ? '<div class="name">'+esc(a.name)+'</div>' : '') +
       '<div class="main">' +
@@ -1244,6 +1333,7 @@
         '<div class="seg-time"><span>Out</span><b>'+outLine+'</b></div>' +
       '</div>' +
       '<div class="side"><span class="pill" style="background:var(--status-resolved-bg);color:var(--status-resolved)">'+esc(a.status||'Present')+'</span></div>' +
+      deviceLine +
     '</div>';
   }
 
@@ -1583,11 +1673,11 @@
           gateCard('dct', role) + gateCard('norrsken', role) + gateCard('hut', role) +
         '</div>' +
         (role ? (
-          '<div class="field"><label for="gateCode">Access code</label><input type="text" id="gateCode" placeholder="Enter your team\'s code" autocomplete="off" value="'+esc(state.gateCode)+'"></div>' +
+          '<div class="field"><label for="gateCode">Access code</label><input type="text" id="gateCode" placeholder="'+(role==='dct'?"Enter your own personal code":"Enter your team's code")+'" autocomplete="off" value="'+esc(state.gateCode)+'"></div>' +
           '<div class="field"><label for="gateName">'+(role==='dct'?'Which engineer are you?':'Who are you?')+'</label><select id="gateName"><option value="">Select your name…</option>' +
             ROLE_ROSTER[role].map(n=>'<option '+((state.gateName||(state.identity&&state.identity.role===role?state.identity.name:''))===n?'selected':'')+'>'+n+'</option>').join('') +
           '</select></div>' +
-          (state.gateError ? '<div class="gate-error">'+esc(state.gateError)+'</div>' : '<div class="gate-hint">Don\'t have a code? Ask your DCT contact for it.</div>') +
+          (state.gateError ? '<div class="gate-error">'+esc(state.gateError)+'</div>' : '<div class="gate-hint">'+(role==='dct'?"Don't know your code? Ask your DCT contact — each person's code is private to them.":"Don't have a code? Ask your DCT contact for it.")+'</div>') +
           '<button class="btn primary" id="saveIdentity" style="align-self:flex-end">Continue</button>'
         ) : '') +
       '</div>' +
@@ -1658,8 +1748,13 @@
       const name = document.getElementById('gateName').value.trim();
       state.gateCode = code; state.gateName = name;
       if(!name){ state.gateError = 'Please select your name.'; render(); return; }
-      if(code.toUpperCase() !== ACCESS[role].code.toUpperCase()){
-        state.gateError = "That code doesn't match. Double-check with your DCT contact.";
+      // DCT uses one code per person (must match the selected name specifically); the two client
+      // institutions still use one shared code for everyone on that team.
+      const requiredCode = role==='dct' ? (DCT_PERSON_CODES[name] || '') : ACCESS[role].code;
+      if(!requiredCode || code.toUpperCase() !== requiredCode.toUpperCase()){
+        state.gateError = role==='dct'
+          ? "That code doesn't match "+name+"'s code. Double-check with your DCT contact."
+          : "That code doesn't match. Double-check with your DCT contact.";
         render(); return;
       }
       const prevIdentity = state.identity;
